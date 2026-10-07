@@ -1,0 +1,157 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hrnova-turnover-prediction"
+version = "1.0.0"
+description = "Prédiction du turnover des salariés TechNova Partners - Analyse, nettoyage, modélisation et interprétabilité"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [
+    {name = "Samuel Gabbai", email = "samuel@example.com"}
+]
+keywords = ["machine-learning", "data-science", "classification", "turnover", "hr", "shap"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Natural Language :: French",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Office/Business :: News/Diary",
+]
+
+dependencies = [
+    "numpy>=1.24.0",
+    "pandas>=2.0.0",
+    "scikit-learn==1.7.2",
+    "matplotlib>=3.8.0",
+    "seaborn>=0.13.0",
+    "plotly>=5.18.0",
+    "lightgbm>=4.1.0",
+    "xgboost>=2.0.0",
+    "shap>=0.44.0",
+    "ydata-profiling>=4.5.0",
+    "imbalanced-learn>=0.11.0",
+    "joblib>=1.3.0",
+    "scipy>=1.11.0",
+]
+
+[project.optional-dependencies]
+api = [
+    "fastapi>=0.110.0",
+    "uvicorn[standard]>=0.27.0",
+    "httpx>=0.27.0",
+]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+    "black>=23.11.0",
+    "ruff>=0.1.8",
+    "mypy>=1.7.0",
+    "isort>=5.13.0",
+    "pre-commit>=3.5.0",
+]
+notebook = [
+    "jupyter>=1.0.0",
+    "jupyterlab>=4.0.0",
+    "ipywidgets>=8.1.0",
+    "nbformat>=5.10.0",
+]
+quality = [
+    "pylint>=3.0.0",
+    "flake8>=6.1.0",
+]
+all = [
+    "hrnova-turnover-prediction[dev,notebook,quality]",
+]
+
+[project.urls]
+Homepage = "https://github.com/example/hrnova"
+Documentation = "https://github.com/example/hrnova"
+Repository = "https://github.com/example/hrnova.git"
+Issues = "https://github.com/example/hrnova/issues"
+
+[tool.setuptools]
+packages = []
+py-modules = ["api"]
+
+[tool.black]
+line-length = 100
+target-version = ["py310", "py311", "py312", "py313"]
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+  | notebooks
+)/
+'''
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+select = ["E", "F", "W", "I", "N", "UP", "B"]
+ignore = ["E501"]
+exclude = [
+    ".git",
+    ".venv",
+    "build",
+    "dist",
+    ".eggs",
+    "notebooks",
+    "*.egg-info",
+]
+
+[tool.ruff.isort]
+known-first-party = ["hrnova"]
+line-length = 100
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+check_untyped_defs = true
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
+python_classes = "Test*"
+python_functions = "test_*"
+addopts = "--cov=src --cov-report=html --cov-report=term-missing"
+
+[tool.coverage.run]
+source = ["src"]
+omit = [
+    "*/tests/*",
+    "*/__init__.py",
+    "*/setup.py",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+    "if typing.TYPE_CHECKING:",
+]
