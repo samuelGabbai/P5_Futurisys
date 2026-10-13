@@ -37,6 +37,7 @@ Requires-Dist: imbalanced-learn>=0.11.0
 Requires-Dist: joblib>=1.3.0
 Requires-Dist: scipy>=1.11.0
 Provides-Extra: api
+Requires-Dist: python-multipart>=0.0.20; extra == "api"
 Requires-Dist: fastapi>=0.110.0; extra == "api"
 Requires-Dist: uvicorn[standard]>=0.27.0; extra == "api"
 Requires-Dist: httpx>=0.27.0; extra == "api"
@@ -218,6 +219,57 @@ Il exécute les tests de l'API avec mesure de couverture, puis construit le pack
 sont téléchargeables dans les artefacts de l'exécution pendant 14 jours.
 Les tests utilisent un modèle simulé et ne nécessitent pas de réentraîner le notebook.
 Aucun secret n'est nécessaire ; ce workflow ne déploie pas l'API.
+
+### Tests automatiques et validation avant fusion
+
+Chaque push vers n'importe quelle branche déclenche les tests. Un commit uniquement local
+ne déclenche pas GitHub Actions : il est vérifié lorsqu'il est poussé sur GitHub.
+Les pull requests déclenchent aussi les tests sur le résultat de la fusion proposée.
+L'événement `merge_group` prend en charge une éventuelle file de fusion GitHub.
+Le contrôle **Validation avant fusion** échoue si les tests ou la construction échouent.
+
+Pour bloquer effectivement les fusions, après une première exécution du workflow,
+configurer une protection pour `main` et `develop` dans **Settings → Branches**
+(ou un ruleset dans **Settings → Rules → Rulesets**) :
+
+1. Exiger une pull request avant fusion (**Require a pull request before merging**).
+2. Exiger les contrôles réussis (**Require status checks to pass before merging**)
+   et sélectionner **Validation avant fusion**.
+3. Exiger une branche à jour (**Require branches to be up to date before merging**).
+4. Appliquer les règles aux administrateurs et éviter les autorisations de contournement.
+
+Ces paramètres sont des réglages du dépôt GitHub ; le fichier YAML seul ne peut pas
+interdire une fusion. Ils restent à activer sur le dépôt.
+
+### Gestion des environnements
+
+Après une CI réussie, les push et lancements manuels exécutent un job supplémentaire
+dans l'environnement GitHub correspondant à la branche :
+
+| Branche | Environnement GitHub | Usage |
+| --- | --- | --- |
+| Branches de travail | `development` | Validation pendant le développement |
+| `develop` | `staging` | Validation avant production |
+| `main` | `production` | Validation de la version principale |
+
+Dans **Settings → Environments**, créer ces trois environnements. Limiter `staging`
+à la branche `develop` et `production` à `main` avec les règles de branches autorisées.
+Pour `production`, ajouter un approbateur obligatoire si cette option est disponible
+pour le dépôt. Laisser `development` accessible aux branches de travail.
+
+Chaque environnement peut définir la variable **HRNOVA_MODEL_PATH**, utilisée par
+l'API pour choisir son modèle. Sans valeur spécifique, le workflow utilise
+`artifacts/turnover_model.joblib`. Les futurs identifiants de services doivent être
+enregistrés dans les **secrets de l'environnement** concerné.
+
+Le job vérifie que le chemin configuré est non vide et se termine par `.joblib`, puis
+relance les tests avec cette configuration. Les tests utilisent un modèle simulé :
+ils ne valident ni la présence ni la qualité d'un modèle réel. Aucun serveur n'est
+déployé par ce workflow. Les pull requests exécutent la CI sans accéder aux
+environnements cibles, afin que leurs contrôles n'attendent pas une approbation de production.
+
+Références : [protection des branches](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches)
+et [environnements GitHub Actions](https://docs.github.com/en/actions/reference/workflows-and-actions/deployments-and-environments).
 
 Pour reproduire les vérifications localement :
 

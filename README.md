@@ -146,6 +146,55 @@ déjà préparées et encodées ; `GET /features` fournit leurs noms exacts. Les
 probabilité estimée, le seuil optimisé et la décision. Le chemin de l'artefact peut être remplacé
 avec la variable `HRNOVA_MODEL_PATH`.
 
+### Envoyer un CSV : predict, predict_proba et score
+
+Les trois routes acceptent un fichier via le champ multipart `file` :
+
+| Route POST | Contenu du CSV | Résultat |
+| --- | --- | --- |
+| `/predict/file` | Variables du modèle | Classes prédites avec `model.predict` |
+| `/predict-proba/file` | Variables du modèle | Probabilités avec `model.predict_proba` et ordre des classes |
+| `/score/file` | Variables et vraies réponses | Accuracy avec `model.score`, puis accuracy, précision, rappel et F1 au seuil optimisé |
+
+Lancer l'API puis ouvrir <http://127.0.0.1:8000/docs>. Dans **Fichiers CSV**, sélectionner
+une route, cliquer sur **Try it out**, choisir le fichier et cliquer sur **Execute**.
+
+```bash
+uv sync --locked --extra api
+uv run --no-sync uvicorn api:app --reload
+```
+
+Le fichier doit être un **CSV UTF-8**, avec une ligne d'en-tête et au moins une ligne de données,
+limité à 10 Mio. Les noms des colonnes doivent correspondre exactement à `GET /features`.
+Leur ordre est libre. Les variables doivent être numériques, déjà préparées et encodées,
+sans valeur manquante ou infinie. Les CSV RH bruts du dossier `Data/` doivent donc passer
+par la préparation du notebook avant leur envoi. Ne pas ajouter de colonne d'identifiant.
+Les résultats suivent l'ordre des lignes du fichier.
+
+Pour `/score/file`, ajouter la colonne `a_quitte_l_entreprise` avec les réponses réelles
+(`0`/`1` ou `Non`/`Oui`). Un autre nom est possible avec `?target_column=nom_colonne`.
+Pour un CSV séparé par des points-virgules, ajouter `?separator=%3B`.
+
+```bash
+curl -X POST http://127.0.0.1:8000/predict/file \
+  -F 'file=@employes_prepares.csv'
+
+curl -X POST http://127.0.0.1:8000/predict-proba/file \
+  -F 'file=@employes_prepares.csv'
+
+curl -X POST http://127.0.0.1:8000/score/file \
+  -F 'file=@employes_prepares_avec_cible.csv'
+```
+
+`predictions` contient une classe par ligne. Dans `probabilities`, chaque ligne contient
+les probabilités dans l'ordre du tableau `classes`. Le champ `score` mesure la proportion
+de bonnes prédictions natives. Les champs `threshold_*` évaluent la décision au seuil
+optimisé du notebook ; ils peuvent différer du score natif. La route JSON `/predict`
+existante continue à utiliser ce seuil optimisé.
+
+L'envoi de fichiers utilise [UploadFile de FastAPI](https://fastapi.tiangolo.com/tutorial/request-files/).
+La définition du score suit celle du [modèle calibré scikit-learn](https://scikit-learn.org/1.7/modules/generated/sklearn.calibration.CalibratedClassifierCV.html).
+
 ## Intégration continue (GitHub Actions)
 
 Le workflow `.github/workflows/ci.yml` s'exécute à chaque push, à chaque pull request
