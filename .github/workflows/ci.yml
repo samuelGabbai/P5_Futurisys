@@ -1,0 +1,60 @@
+name: CI Python
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-and-build:
+    name: Tests et construction du package
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Récupérer le code
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Installer uv et Python
+        uses: astral-sh/setup-uv@v10
+        with:
+          python-version: '3.13'
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+
+      - name: Installer les dépendances verrouillées
+        run: uv sync --locked --extra api --extra dev
+
+      - name: Exécuter les tests et mesurer la couverture
+        run: uv run --no-sync pytest --cov-report=xml --junitxml=reports/junit.xml
+
+      - name: Conserver les rapports de tests
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: |
+            reports/junit.xml
+            coverage.xml
+            htmlcov/
+          retention-days: 14
+          if-no-files-found: warn
+
+      - name: Construire le package Python
+        run: uv build
+
+      - name: Conserver le package
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-package
+          path: dist/
+          retention-days: 14
+          if-no-files-found: error

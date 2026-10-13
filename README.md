@@ -146,6 +146,26 @@ déjà préparées et encodées ; `GET /features` fournit leurs noms exacts. Les
 probabilité estimée, le seuil optimisé et la décision. Le chemin de l'artefact peut être remplacé
 avec la variable `HRNOVA_MODEL_PATH`.
 
+## Intégration continue (GitHub Actions)
+
+Le workflow `.github/workflows/ci.yml` s'exécute à chaque push, à chaque pull request
+et manuellement depuis l'onglet **Actions** de GitHub. Il utilise Python 3.13 et installe
+les dépendances avec `uv sync --locked --extra api --extra dev` pour respecter `uv.lock`.
+
+Il exécute les tests de l'API avec mesure de couverture, puis construit le package Python
+(wheel et archive source). Les rapports de tests et de couverture ainsi que le package
+sont téléchargeables dans les artefacts de l'exécution pendant 14 jours.
+Les tests utilisent un modèle simulé et ne nécessitent pas de réentraîner le notebook.
+Aucun secret n'est nécessaire ; ce workflow ne déploie pas l'API.
+
+Pour reproduire les vérifications localement :
+
+```bash
+uv sync --locked --extra api --extra dev
+uv run --no-sync pytest --cov-report=xml --junitxml=reports/junit.xml
+uv build
+```
+
 ## Méthodologie
 
 Le projet suit une logique de data science structurée :

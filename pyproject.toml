@@ -135,10 +135,10 @@ testpaths = ["tests"]
 python_files = "test_*.py"
 python_classes = "Test*"
 python_functions = "test_*"
-addopts = "--cov=src --cov-report=html --cov-report=term-missing"
+addopts = "--cov=api --cov-report=html --cov-report=term-missing"
 
 [tool.coverage.run]
-source = ["src"]
+source = ["api"]
 omit = [
     "*/tests/*",
     "*/__init__.py",
