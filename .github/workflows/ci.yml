@@ -3,6 +3,7 @@ name: CI Python
 on:
   push:
   pull_request:
+  merge_group:
   workflow_dispatch:
 
 permissions:
@@ -58,3 +59,50 @@ jobs:
           path: dist/
           retention-days: 14
           if-no-files-found: error
+
+  merge-validation:
+    name: Validation avant fusion
+    if: ${{ always() }}
+    needs: test-and-build
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Vérifier le résultat de la CI
+        env:
+          CI_RESULT: ${{ needs.test-and-build.result }}
+        run: |
+          if [ "$CI_RESULT" != "success" ]; then
+            echo "La fusion exige des tests et une construction réussis."
+            exit 1
+          fi
+
+  environment-validation:
+    name: Validation de l'environnement
+    needs: test-and-build
+    if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment:
+      name: ${{ github.ref == 'refs/heads/main' && 'production' || github.ref == 'refs/heads/develop' && 'staging' || 'development' }}
+    env:
+      HRNOVA_MODEL_PATH: ${{ vars.HRNOVA_MODEL_PATH || 'artifacts/turnover_model.joblib' }}
+    steps:
+      - name: Récupérer le code
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Installer uv et Python
+        uses: astral-sh/setup-uv@v10
+        with:
+          python-version: '3.13'
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+
+      - name: Installer les dépendances verrouillées
+        run: uv sync --locked --extra api --extra dev
+
+      - name: Valider la configuration et les tests dans l'environnement cible
+        run: |
+          uv run --no-sync python -c 'import os; from pathlib import Path; assert os.environ["HRNOVA_MODEL_PATH"].strip(), "HRNOVA_MODEL_PATH doit être renseigné"; assert Path(os.environ["HRNOVA_MODEL_PATH"]).suffix == ".joblib", "Le modèle doit être un fichier .joblib"'
+          uv run --no-sync pytest --no-cov
