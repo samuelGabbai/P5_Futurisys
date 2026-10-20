@@ -25,6 +25,7 @@ def client_with_fake_model(monkeypatch):
         api,
         "get_model_bundle",
         lambda: {
+            "model_sha256": "test-model",
             "model": FakeModel(),
             "threshold": 0.6,
             "feature_names": ["feature_a", "feature_b"],
@@ -110,7 +111,9 @@ def test_csv_predictions_preserve_rows_and_reorder_columns(monkeypatch):
 
 def test_csv_probabilities_include_class_order_and_support_semicolon(monkeypatch):
     client = client_with_fake_model(monkeypatch)
-    response = upload(client, "/predict-proba/file?separator=;", "\ufefffeature_a;feature_b\n2;4\n6;8\n")
+    response = upload(
+        client, "/predict-proba/file?separator=;", "\ufefffeature_a;feature_b\n2;4\n6;8\n"
+    )
     assert response.status_code == 200
     assert response.json() == {
         "row_count": 2,
@@ -123,7 +126,11 @@ def test_csv_probabilities_include_class_order_and_support_semicolon(monkeypatch
 def test_csv_score_requires_truth_and_returns_accuracy(monkeypatch, labels):
     client = client_with_fake_model(monkeypatch)
     first, second = labels.splitlines()
-    response = upload(client, "/score/file", f"feature_a,feature_b,a_quitte_l_entreprise\n2,4,{first}\n6,8,{second}\n")
+    response = upload(
+        client,
+        "/score/file",
+        f"feature_a,feature_b,a_quitte_l_entreprise\n2,4,{first}\n6,8,{second}\n",
+    )
     assert response.status_code == 200
     assert response.json() == {
         "row_count": 2,
@@ -142,25 +149,43 @@ def test_csv_score_distinguishes_native_predictions_from_optimized_threshold(mon
         def predict_proba(self, frame):
             return [[0.45, 0.55] for _ in range(len(frame))]
 
-    monkeypatch.setattr(api, "get_model_bundle", lambda: {
-        "model": LowProbabilityModel(), "threshold": 0.6,
-        "feature_names": ["feature_a", "feature_b"], "positive_class": 1,
-    })
+    monkeypatch.setattr(
+        api,
+        "get_model_bundle",
+        lambda: {
+            "model_sha256": "test-model",
+            "model": LowProbabilityModel(),
+            "threshold": 0.6,
+            "feature_names": ["feature_a", "feature_b"],
+            "positive_class": 1,
+        },
+    )
     client = TestClient(api.app)
-    response = upload(client, "/score/file?target_column=target", "feature_a,feature_b,target\n2,4,1\n")
+    response = upload(
+        client, "/score/file?target_column=target", "feature_a,feature_b,target\n2,4,1\n"
+    )
     assert response.status_code == 200
     assert response.json()["score"] == 1.0
     assert response.json()["threshold_accuracy"] == 0.0
 
 
-@pytest.mark.parametrize("content", [
-    "", "feature_a,feature_b\n", "feature_a,feature_a\n2,4\n",
-    "feature_a,feature_b\n2,4,6\n", "feature_a,feature_b\n2\n",
-    "feature_a\n2\n", "feature_a,feature_b,extra\n2,4,6\n",
-    "feature_a,feature_b\ntext,4\n", "feature_a,feature_b\nnan,4\n",
-    "feature_a,feature_b\ninf,4\n", "feature_a,feature_b\n,4\n",
-    b"feature_a,feature_b\n\xff,4\n",
-])
+@pytest.mark.parametrize(
+    "content",
+    [
+        "",
+        "feature_a,feature_b\n",
+        "feature_a,feature_a\n2,4\n",
+        "feature_a,feature_b\n2,4,6\n",
+        "feature_a,feature_b\n2\n",
+        "feature_a\n2\n",
+        "feature_a,feature_b,extra\n2,4,6\n",
+        "feature_a,feature_b\ntext,4\n",
+        "feature_a,feature_b\nnan,4\n",
+        "feature_a,feature_b\ninf,4\n",
+        "feature_a,feature_b\n,4\n",
+        b"feature_a,feature_b\n\xff,4\n",
+    ],
+)
 def test_csv_rejects_invalid_input(monkeypatch, content):
     response = upload(client_with_fake_model(monkeypatch), "/predict/file", content)
     assert response.status_code == 422
@@ -168,12 +193,18 @@ def test_csv_rejects_invalid_input(monkeypatch, content):
 
 def test_csv_score_rejects_missing_or_invalid_target(monkeypatch):
     client = client_with_fake_model(monkeypatch)
-    for content in ["feature_a,feature_b\n2,4\n", "feature_a,feature_b,a_quitte_l_entreprise\n2,4,unknown\n"]:
+    for content in [
+        "feature_a,feature_b\n2,4\n",
+        "feature_a,feature_b,a_quitte_l_entreprise\n2,4,unknown\n",
+    ]:
         assert upload(client, "/score/file", content).status_code == 422
 
 
 def test_csv_rejects_wrong_extension_and_large_file(monkeypatch):
     client = client_with_fake_model(monkeypatch)
-    assert upload(client, "/predict/file", "feature_a,feature_b\n2,4\n", "file.xlsx").status_code == 422
+    assert (
+        upload(client, "/predict/file", "feature_a,feature_b\n2,4\n", "file.xlsx").status_code
+        == 422
+    )
     monkeypatch.setattr(api, "MAX_CSV_BYTES", 10)
     assert upload(client, "/predict/file", "feature_a,feature_b\n2,4\n").status_code == 413

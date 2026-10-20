@@ -46,6 +46,9 @@ dependencies = [
 
 [project.optional-dependencies]
 api = [
+    "sqlalchemy>=2.0,<3",
+    "psycopg[binary]>=3.2,<4",
+    "python-dotenv>=1.0,<2",
     "python-multipart>=0.0.20",
     "fastapi>=0.110.0",
     "uvicorn[standard]>=0.27.0",
@@ -82,7 +85,7 @@ Issues = "https://github.com/example/hrnova/issues"
 
 [tool.setuptools]
 packages = []
-py-modules = ["api"]
+py-modules = ["api", "audit", "database", "inference", "create_db"]
 
 [tool.black]
 line-length = 100
@@ -136,10 +139,10 @@ testpaths = ["tests"]
 python_files = "test_*.py"
 python_classes = "Test*"
 python_functions = "test_*"
-addopts = "--cov=api --cov-report=html --cov-report=term-missing"
+addopts = "--cov=api --cov=audit --cov=database --cov=inference --cov=create_db --cov-report=html --cov-report=term-missing"
 
 [tool.coverage.run]
-source = ["api"]
+source = ["api", "audit", "database", "inference", "create_db"]
 omit = [
     "*/tests/*",
     "*/__init__.py",

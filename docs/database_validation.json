@@ -1,0 +1,53 @@
+{
+  "dataset_counts": {
+    "employees": 1470,
+    "surveys": 1470,
+    "evaluations": 1470,
+    "prepared_employees": 1470
+  },
+  "source_values_preserved": true,
+  "requests": [
+    {
+      "route": "/predict/file",
+      "exchange_id": "2bd5e72b-f8d7-4668-a761-c4833e0145e5",
+      "input_rows": 2,
+      "http_status": 200,
+      "output_matches_response": true
+    },
+    {
+      "route": "/predict-proba/file",
+      "exchange_id": "f36a1a42-64fd-475d-91cc-f67851ad113a",
+      "input_rows": 2,
+      "http_status": 200,
+      "output_matches_response": true
+    },
+    {
+      "route": "/score/file",
+      "exchange_id": "c3833b67-78e6-4839-897d-66a7876fc442",
+      "input_rows": 2,
+      "http_status": 200,
+      "output_matches_response": true
+    },
+    {
+      "route": "/predict",
+      "exchange_id": "2568d522-81f5-4d57-b489-dd24abffbf74",
+      "input_rows": 1,
+      "http_status": 200,
+      "output_matches_response": true
+    },
+    {
+      "route": "/employees/{id}/score",
+      "exchange_id": "31843534-5b5b-409f-9fe1-32d4783c47e7",
+      "input_rows": 1,
+      "http_status": 200,
+      "output_matches_response": true
+    }
+  ],
+  "application_role_privileges": {
+    "update_dataset": false,
+    "delete_inputs": false,
+    "update_outputs": false,
+    "insert_outputs": true
+  },
+  "verified_at_utc": "2026-10-20T10:31:34.716877+00:00"
+}

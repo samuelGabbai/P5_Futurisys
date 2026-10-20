@@ -12,6 +12,7 @@ Ce projet a pour objectif de prédire le risque de départ d’un salarié au se
 - [Données](#données)
 - [Installation](#installation)
 - [Usage](#usage)
+- [Base PostgreSQL et traçabilité](#base-postgresql-et-traçabilité)
 - [Méthodologie](#méthodologie)
 - [Modèle retenu](#modèle-retenu)
 - [Interprétabilité](#interprétabilité)
@@ -135,6 +136,7 @@ enregistrés dans `artifacts/turnover_model.joblib`.
 
 ```bash
 uv sync --extra api
+uv run --no-sync python scripts/local_postgres.py start
 uv run uvicorn api:app --reload
 ```
 
@@ -161,6 +163,7 @@ une route, cliquer sur **Try it out**, choisir le fichier et cliquer sur **Execu
 
 ```bash
 uv sync --locked --extra api
+uv run --no-sync python scripts/local_postgres.py start
 uv run --no-sync uvicorn api:app --reload
 ```
 
@@ -195,6 +198,22 @@ existante continue à utiliser ce seuil optimisé.
 L'envoi de fichiers utilise [UploadFile de FastAPI](https://fastapi.tiangolo.com/tutorial/request-files/).
 La définition du score suit celle du [modèle calibré scikit-learn](https://scikit-learn.org/1.7/modules/generated/sklearn.calibration.CalibratedClassifierCV.html).
 
+## Base PostgreSQL et traçabilité
+
+Les [logs API détaillés](docs/api_logs.md) sont consultables dans DBeaver via la vue
+`public.api_logs` : message, durée, fichier, nombre de lignes, étape atteinte et cause des erreurs.
+
+L'API utilise obligatoirement PostgreSQL pour enregistrer puis relire chaque entrée
+du modèle et chaque résultat. La base locale `hrnova` contient les trois CSV complets,
+les variables préparées et les journaux d'échanges. Chaque réponse porte un en-tête
+`X-Request-ID` permettant de retrouver ses inputs et outputs. Sans BDD, l'API renvoie 503.
+
+Le [guide PostgreSQL](docs/database.md) contient le schéma relationnel, les commandes
+de création/import, les droits d'accès et les exemples SQL. Le script
+[`create_db.py`](create_db.py) réalise l'import transactionnel et idempotent ;
+[`scripts/local_postgres.py`](scripts/local_postgres.py) provisionne une instance locale
+avec des rôles distincts d'administration et d'application.
+
 ## Intégration continue (GitHub Actions)
 
 Le workflow `.github/workflows/ci.yml` s'exécute à chaque push, à chaque pull request
@@ -205,6 +224,8 @@ Il exécute les tests de l'API avec mesure de couverture, puis construit le pack
 (wheel et archive source). Les rapports de tests et de couverture ainsi que le package
 sont téléchargeables dans les artefacts de l'exécution pendant 14 jours.
 Les tests utilisent un modèle simulé et ne nécessitent pas de réentraîner le notebook.
+La CI démarre également PostgreSQL 18 pour vérifier l'import du dataset complet et
+la traçabilité, dans des schémas isolés supprimés après chaque test.
 Aucun secret n'est nécessaire ; ce workflow ne déploie pas l'API.
 
 ### Tests automatiques et validation avant fusion

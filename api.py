@@ -1,19 +1,31 @@
 """API de prédiction du risque de départ HRNova."""
 
 import csv
+import hashlib
+import logging
 import math
 import os
 from functools import lru_cache
-from io import StringIO
+from io import BytesIO, StringIO
 from pathlib import Path
+from time import perf_counter
 from typing import Any
+from uuid import uuid4
 
 import joblib
 import numpy as np
 import pandas as pd
-from fastapi import FastAPI, HTTPException, Query, UploadFile
+from fastapi import FastAPI, HTTPException, Query, Request, UploadFile
+from fastapi.responses import JSONResponse
+from fastapi.exceptions import RequestValidationError
+from fastapi.exception_handlers import http_exception_handler, request_validation_exception_handler
 from pydantic import BaseModel, ConfigDict
-from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
+from sqlalchemy.exc import SQLAlchemyError
+from starlette.concurrency import run_in_threadpool
+from starlette.exceptions import HTTPException as StarletteHTTPException
+
+import audit
+import inference
 
 DEFAULT_MODEL_PATH = Path(__file__).parent / "artifacts" / "turnover_model.joblib"
 MAX_CSV_BYTES = 10 * 1024 * 1024
@@ -24,6 +36,107 @@ app = FastAPI(
     description="Prédit le risque de départ à partir des variables préparées du modèle HRNova.",
     version="1.0.0",
 )
+logger = logging.getLogger(__name__)
+
+
+@app.exception_handler(StarletteHTTPException)
+async def trace_http_error(request: Request, error: StarletteHTTPException):
+    detail = error.detail
+    if isinstance(detail, dict) and "missing_features" in detail:
+        message = (
+            f"Colonnes manquantes : {', '.join(detail['missing_features']) or 'aucune'} ; "
+            f"colonnes inattendues : {', '.join(detail['unexpected_features']) or 'aucune'}."
+        )
+    else:
+        message = str(detail)
+    request.state.audit_error = {"message": audit.redact(message), "detail": detail}
+    return await http_exception_handler(request, error)
+
+
+@app.exception_handler(RequestValidationError)
+async def trace_validation_error(request: Request, error: RequestValidationError):
+    # Ne pas recopier input, ctx ou le corps JSON dans le journal des erreurs.
+    errors = [
+        {"location": list(item["loc"]), "message": item["msg"], "type": item["type"]}
+        for item in error.errors()
+    ]
+    request.state.audit_error = {
+        "message": "Requête invalide : "
+        + "; ".join(
+            f"{'.'.join(map(str, item['location']))} : {item['message']}" for item in errors
+        ),
+        "validation_errors": errors,
+    }
+    request.state.audit_error_type = "RequestValidationError"
+    return await request_validation_exception_handler(request, error)
+
+
+@app.middleware("http")
+async def trace_exchange(request: Request, call_next):
+    started = perf_counter()
+    exchange_id = str(uuid4())
+    request.state.exchange_id = exchange_id
+    request.state.audit_details = {
+        "client_host": request.client.host if request.client else None,
+        "query": {
+            key: request.query_params[key][:255]
+            for key in ("separator", "target_column")
+            if key in request.query_params
+        },
+    }
+    try:
+        await run_in_threadpool(
+            audit.start_exchange,
+            exchange_id,
+            request.method,
+            request.url.path,
+            request.state.audit_details,
+        )
+    except (SQLAlchemyError, RuntimeError):
+        logger.error("BDD indisponible au début de la requête %s", exchange_id)
+        return JSONResponse(
+            status_code=503,
+            content={"detail": "Base de données indisponible."},
+            headers={"X-Request-ID": exchange_id},
+        )
+    error_type = None
+    try:
+        response = await call_next(request)
+    except Exception as error:
+        error_type = type(error).__name__
+        request.state.audit_error = audit.exception_details(error)
+        logger.error("Échec de la requête %s (%s)", exchange_id, error_type)
+        status = 503 if isinstance(error, SQLAlchemyError) else 500
+        response = JSONResponse(
+            status_code=status,
+            content={"detail": "Échec de la requête ; consultez le journal local."},
+        )
+    try:
+        route = request.scope.get("route")
+        request.state.audit_details.update(
+            {
+                "route_template": getattr(route, "path", request.url.path)[:255],
+                "path_parameters": {
+                    key: value for key, value in request.path_params.items() if key == "employee_id"
+                },
+            }
+        )
+        await run_in_threadpool(
+            audit.finish_exchange,
+            exchange_id,
+            response.status_code,
+            (perf_counter() - started) * 1000,
+            request.state.audit_details,
+            error_type or getattr(request.state, "audit_error_type", None),
+            getattr(request.state, "audit_error", None),
+        )
+    except (SQLAlchemyError, RuntimeError):
+        logger.error("Impossible de finaliser le journal de la requête %s", exchange_id)
+        response = JSONResponse(
+            status_code=503, content={"detail": "Enregistrement de la requête incomplet."}
+        )
+    response.headers["X-Request-ID"] = exchange_id
+    return response
 
 
 class PredictionRequest(BaseModel):
@@ -87,6 +200,26 @@ def _read_csv(file: UploadFile, separator: str) -> pd.DataFrame:
         raise HTTPException(status_code=422, detail=f"CSV UTF-8 invalide : {error}") from error
 
 
+def _uploaded_frame(
+    request: Request, file: UploadFile, separator: str, target_column: str | None = None
+) -> pd.DataFrame:
+    request.state.audit_details.update(
+        {
+            "filename": (file.filename or "")[:255],
+            "file_size_bytes": file.size,
+            "content_type": file.content_type,
+            "separator": separator,
+        }
+    )
+    if target_column is not None:
+        request.state.audit_details["target_column"] = target_column
+    frame = _read_csv(file, separator)
+    request.state.audit_details.update(
+        {"uploaded_rows": len(frame), "uploaded_columns": len(frame.columns)}
+    )
+    return frame
+
+
 def _file_features(frame: pd.DataFrame, artifact: dict[str, Any]) -> pd.DataFrame:
     expected = artifact["feature_names"]
     missing = sorted(set(expected) - set(frame.columns))
@@ -99,45 +232,52 @@ def _file_features(frame: pd.DataFrame, artifact: dict[str, Any]) -> pd.DataFram
     try:
         numeric = frame.loc[:, expected].apply(pd.to_numeric, errors="raise").astype(float)
     except (TypeError, ValueError, OverflowError) as error:
-        raise HTTPException(status_code=422, detail="Les variables doivent être numériques.") from error
+        raise HTTPException(
+            status_code=422, detail="Les variables doivent être numériques."
+        ) from error
     if not np.isfinite(numeric.to_numpy()).all():
         raise HTTPException(status_code=422, detail="Valeurs manquantes ou non finies dans le CSV.")
     return numeric
 
 
 @app.post("/predict/file", response_model=FilePredictionResponse, tags=["Fichiers CSV"])
-def predict_file(file: UploadFile, separator: str = Query(",", pattern="^[,;]$")):
+def predict_file(request: Request, file: UploadFile, separator: str = Query(",", pattern="^[,;]$")):
     """Prédictions natives du modèle, dans l'ordre des lignes du CSV."""
+    frame = _uploaded_frame(request, file, separator)
     artifact = get_model_bundle()
-    features = _file_features(_read_csv(file, separator), artifact)
-    return FilePredictionResponse(
-        row_count=len(features), predictions=artifact["model"].predict(features).tolist()
+    features = _file_features(frame, artifact)
+    return inference.execute(
+        request.state.exchange_id, "predict", features, artifact, filename=file.filename
     )
 
 
 @app.post("/predict-proba/file", response_model=FileProbabilityResponse, tags=["Fichiers CSV"])
-def predict_proba_file(file: UploadFile, separator: str = Query(",", pattern="^[,;]$")):
+def predict_proba_file(
+    request: Request, file: UploadFile, separator: str = Query(",", pattern="^[,;]$")
+):
     """Probabilités par classe ; classes donne l'ordre des colonnes de probabilités."""
+    frame = _uploaded_frame(request, file, separator)
     artifact = get_model_bundle()
-    features = _file_features(_read_csv(file, separator), artifact)
-    return FileProbabilityResponse(
-        row_count=len(features),
-        classes=list(artifact["model"].classes_),
-        probabilities=np.asarray(artifact["model"].predict_proba(features)).tolist(),
+    features = _file_features(frame, artifact)
+    return inference.execute(
+        request.state.exchange_id, "predict_proba", features, artifact, filename=file.filename
     )
 
 
 @app.post("/score/file", response_model=FileScoreResponse, tags=["Fichiers CSV"])
 def score_file(
+    request: Request,
     file: UploadFile,
     target_column: str = Query(TARGET_COLUMN),
     separator: str = Query(",", pattern="^[,;]$"),
 ):
     """Accuracy native et métriques au seuil optimisé, avec les vraies réponses."""
+    frame = _uploaded_frame(request, file, separator, target_column)
     artifact = get_model_bundle()
-    frame = _read_csv(file, separator)
     if target_column in artifact["feature_names"]:
-        raise HTTPException(status_code=422, detail="La cible ne peut pas être une variable du modèle.")
+        raise HTTPException(
+            status_code=422, detail="La cible ne peut pas être une variable du modèle."
+        )
     if target_column not in frame:
         raise HTTPException(status_code=422, detail=f"Colonne cible requise : {target_column}.")
     labels = frame.pop(target_column).str.strip().str.lower().replace({"non": "0", "oui": "1"})
@@ -145,23 +285,13 @@ def score_file(
         raise HTTPException(status_code=422, detail="La cible doit contenir 0/1 ou Non/Oui.")
     labels = labels.astype(int)
     features = _file_features(frame, artifact)
-    model = artifact["model"]
-    classes = list(model.classes_)
-    positive = artifact["positive_class"]
-    if set(classes) != {0, 1} or positive not in classes:
-        raise HTTPException(status_code=500, detail="Le score requiert un modèle binaire 0/1.")
-    probability = np.asarray(model.predict_proba(features))[:, classes.index(positive)]
-    threshold = float(artifact["threshold"])
-    negative = next(value for value in classes if value != positive)
-    predictions = np.where(probability >= threshold, positive, negative)
-    return FileScoreResponse(
-        row_count=len(features),
-        score=float(model.score(features, labels)),
-        threshold=threshold,
-        threshold_accuracy=float(accuracy_score(labels, predictions)),
-        threshold_precision=float(precision_score(labels, predictions, pos_label=positive, zero_division=0)),
-        threshold_recall=float(recall_score(labels, predictions, pos_label=positive, zero_division=0)),
-        threshold_f1=float(f1_score(labels, predictions, pos_label=positive, zero_division=0)),
+    return inference.execute(
+        request.state.exchange_id,
+        "score",
+        features,
+        artifact,
+        labels=labels,
+        filename=file.filename,
     )
 
 
@@ -171,16 +301,17 @@ def _load_artifact(model_path: str) -> dict[str, Any]:
     if not path.is_file():
         raise FileNotFoundError(path)
 
-    artifact = joblib.load(path)
+    content = path.read_bytes()
+    artifact = joblib.load(BytesIO(content))
     required_keys = {
         "model",
         "threshold",
         "feature_names",
         "positive_class",
-        "records_by_employee_id",
     }
     if not isinstance(artifact, dict) or not required_keys.issubset(artifact):
         raise ValueError("Artefact invalide : clés requises absentes.")
+    artifact["model_sha256"] = hashlib.sha256(content).hexdigest()
     return artifact
 
 
@@ -209,13 +340,13 @@ def features() -> dict[str, list[str]]:
 
 
 @app.post("/predict", response_model=PredictionResponse)
-def predict(request: PredictionRequest) -> PredictionResponse:
+def predict(request: Request, payload: PredictionRequest) -> PredictionResponse:
     artifact = get_model_bundle()
-    return _score_features(request.features, artifact)
+    return _score_features(payload.features, artifact, request.state.exchange_id)
 
 
 def _score_features(
-    supplied_features: dict[str, Any], artifact: dict[str, Any]
+    supplied_features: dict[str, Any], artifact: dict[str, Any], exchange_id: str
 ) -> PredictionResponse:
     expected_features = artifact["feature_names"]
 
@@ -230,36 +361,24 @@ def _score_features(
     try:
         row = {name: float(supplied_features[name]) for name in expected_features}
     except (TypeError, ValueError) as error:
-        raise HTTPException(status_code=422, detail="Toutes les variables doivent être numériques.") from error
+        raise HTTPException(
+            status_code=422, detail="Toutes les variables doivent être numériques."
+        ) from error
     if not all(math.isfinite(value) for value in row.values()):
         raise HTTPException(status_code=422, detail="Les variables doivent être des nombres finis.")
 
-    model = artifact["model"]
-    classes = list(model.classes_)
-    positive_class = artifact["positive_class"]
-    if positive_class not in classes:
-        raise HTTPException(status_code=500, detail="Classe positive absente du modèle.")
-
     input_frame = pd.DataFrame([row], columns=expected_features)
-    probability = float(model.predict_proba(input_frame)[0][classes.index(positive_class)])
-    threshold = float(artifact["threshold"])
-    prediction = int(probability >= threshold)
-
     return PredictionResponse(
-        probability=probability,
-        threshold=threshold,
-        prediction=prediction,
-        decision="Risque de départ élevé" if prediction else "Risque de départ faible",
+        **inference.execute(exchange_id, "threshold_predict", input_frame, artifact)
     )
 
 
 @app.get("/employees/{employee_id}/score", response_model=EmployeeScoreResponse)
-def score_employee(employee_id: int) -> EmployeeScoreResponse:
+def score_employee(employee_id: int, request: Request) -> EmployeeScoreResponse:
     artifact = get_model_bundle()
-    records = artifact["records_by_employee_id"]
-    employee_features = records.get(str(employee_id))
-    if employee_features is None:
-        raise HTTPException(status_code=404, detail="Identifiant salarié introuvable.")
-
-    score = _score_features(employee_features, artifact)
-    return EmployeeScoreResponse(employee_id=employee_id, **score.model_dump())
+    employee_values = inference.employee_features(employee_id, artifact)
+    frame = _file_features(pd.DataFrame([employee_values]), artifact)
+    score = inference.execute(
+        request.state.exchange_id, "threshold_predict", frame, artifact, employee_id=employee_id
+    )
+    return EmployeeScoreResponse(**score)
