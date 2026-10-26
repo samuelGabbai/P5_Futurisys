@@ -68,6 +68,17 @@ jobs:
       - name: Construire le package Python
         run: uv build
 
+      - name: Préparer l'export Hugging Face sans lignes salariées
+        run: uv run --no-sync python scripts/publish_huggingface.py --prepare-only
+
+      - name: Conserver le modèle validé pour Hugging Face
+        uses: actions/upload-artifact@v4
+        with:
+          name: huggingface-model-${{ github.sha }}
+          path: hf-release/
+          retention-days: 14
+          if-no-files-found: error
+
       - name: Conserver le package
         uses: actions/upload-artifact@v4
         with:
@@ -91,6 +102,46 @@ jobs:
             echo "La fusion exige des tests et une construction réussis."
             exit 1
           fi
+
+  publish-huggingface:
+    name: Publier le modèle sur Hugging Face
+    needs: [test-and-build, environment-validation]
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: production
+    concurrency:
+      group: huggingface-model-publication
+      cancel-in-progress: false
+    steps:
+      - name: Récupérer le script de publication
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Installer uv et Python
+        uses: astral-sh/setup-uv@v10.3.0
+        with:
+          python-version: '3.13'
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+
+      - name: Installer les dépendances de publication verrouillées
+        run: uv sync --locked --extra publish
+
+      - name: Télécharger uniquement l'export validé
+        uses: actions/download-artifact@v4
+        with:
+          name: huggingface-model-${{ github.sha }}
+          path: hf-release/
+
+      - name: Publier le modèle et ses métadonnées
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          HF_REPO_ID: ${{ vars.HF_REPO_ID || 'SamGabb/hrnova' }}
+        run: uv run --no-sync python scripts/publish_huggingface.py
 
   environment-validation:
     name: Validation de l'environnement

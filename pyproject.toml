@@ -45,6 +45,9 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+publish = [
+    "huggingface-hub>=1.0,<2",
+]
 api = [
     "sqlalchemy>=2.0,<3",
     "psycopg[binary]>=3.2,<4",

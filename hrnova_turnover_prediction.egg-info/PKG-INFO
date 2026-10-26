@@ -36,6 +36,8 @@ Requires-Dist: ydata-profiling>=4.5.0
 Requires-Dist: imbalanced-learn>=0.11.0
 Requires-Dist: joblib>=1.3.0
 Requires-Dist: scipy>=1.11.0
+Provides-Extra: publish
+Requires-Dist: huggingface-hub<2,>=1.0; extra == "publish"
 Provides-Extra: api
 Requires-Dist: sqlalchemy<3,>=2.0; extra == "api"
 Requires-Dist: psycopg[binary]<4,>=3.2; extra == "api"
@@ -265,6 +267,9 @@ La définition du score suit celle du [modèle calibré scikit-learn](https://sc
 
 ## Base PostgreSQL et traçabilité
 
+Les [logs API détaillés](docs/api_logs.md) sont consultables dans DBeaver via la vue
+`public.api_logs` : message, durée, fichier, nombre de lignes, étape atteinte et cause des erreurs.
+
 L'API utilise obligatoirement PostgreSQL pour enregistrer puis relire chaque entrée
 du modèle et chaque résultat. La base locale `hrnova` contient les trois CSV complets,
 les variables préparées et les journaux d'échanges. Chaque réponse porte un en-tête
@@ -277,6 +282,12 @@ de création/import, les droits d'accès et les exemples SQL. Le script
 avec des rôles distincts d'administration et d'application.
 
 ## Intégration continue (GitHub Actions)
+
+La pipeline prépare aussi un export du modèle pour Hugging Face. Après un push sur
+`main` et la réussite des vérifications, le job de publication l'envoie vers le dépôt
+Model configuré par `HF_REPO_ID`, avec le secret `HF_TOKEN`. Sans cette variable,
+la publication reste désactivée. Le [guide Hugging Face](docs/huggingface.md) détaille
+la configuration, les fichiers publiés et la mise à jour du modèle.
 
 Le workflow `.github/workflows/ci.yml` s'exécute à chaque push, à chaque pull request
 et manuellement depuis l'onglet **Actions** de GitHub. Il utilise Python 3.13 et installe

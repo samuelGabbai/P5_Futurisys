@@ -216,6 +216,12 @@ avec des rôles distincts d'administration et d'application.
 
 ## Intégration continue (GitHub Actions)
 
+La pipeline prépare aussi un export du modèle pour Hugging Face. Après un push sur
+`main` et la réussite des vérifications, le job de publication l'envoie vers le dépôt
+Model `SamGabb/hrnova`, avec le secret GitHub `HF_TOKEN`. La variable facultative
+`HF_REPO_ID` permet de changer de dépôt. Le [guide Hugging Face](docs/huggingface.md) détaille
+la configuration, les fichiers publiés et la mise à jour du modèle.
+
 Le workflow `.github/workflows/ci.yml` s'exécute à chaque push, à chaque pull request
 et manuellement depuis l'onglet **Actions** de GitHub. Il utilise Python 3.13 et installe
 les dépendances avec `uv sync --locked --extra api --extra dev` pour respecter `uv.lock`.
