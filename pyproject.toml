@@ -49,6 +49,7 @@ publish = [
     "huggingface-hub>=1.0,<2",
 ]
 api = [
+    "pydantic>=2.7,<3",
     "sqlalchemy>=2.0,<3",
     "psycopg[binary]>=3.2,<4",
     "python-dotenv>=1.0,<2",
@@ -88,7 +89,7 @@ Issues = "https://github.com/example/hrnova/issues"
 
 [tool.setuptools]
 packages = []
-py-modules = ["api", "audit", "database", "inference", "create_db"]
+py-modules = ["api", "audit", "database", "inference", "create_db", "schemas"]
 
 [tool.black]
 line-length = 100
@@ -143,10 +144,10 @@ pythonpath = ["."]
 python_files = "test_*.py"
 python_classes = "Test*"
 python_functions = "test_*"
-addopts = "--cov=api --cov=audit --cov=database --cov=inference --cov=create_db --cov-report=html --cov-report=term-missing"
+addopts = "--cov=api --cov=schemas --cov=audit --cov=database --cov=inference --cov=create_db --cov-report=html --cov-report=term-missing"
 
 [tool.coverage.run]
-source = ["api", "audit", "database", "inference", "create_db"]
+source = ["api", "schemas", "audit", "database", "inference", "create_db"]
 omit = [
     "*/tests/*",
     "*/__init__.py",

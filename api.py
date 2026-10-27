@@ -3,29 +3,41 @@
 import csv
 import hashlib
 import logging
-import math
 import os
 from functools import lru_cache
 from io import BytesIO, StringIO
 from pathlib import Path
 from time import perf_counter
-from typing import Any
+from typing import Annotated, Any
 from uuid import uuid4
 
 import joblib
-import numpy as np
 import pandas as pd
 from fastapi import FastAPI, HTTPException, Query, Request, UploadFile
+from fastapi import Path as PathParameter
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
-from fastapi.exception_handlers import http_exception_handler, request_validation_exception_handler
-from pydantic import BaseModel, ConfigDict
+from fastapi.exception_handlers import http_exception_handler
+from pydantic import ValidationError
 from sqlalchemy.exc import SQLAlchemyError
 from starlette.concurrency import run_in_threadpool
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 import audit
 import inference
+from schemas import (
+    BatchPredictionRequest,
+    EmployeeScoreResponse,
+    FeaturesResponse,
+    FilePredictionResponse,
+    FileProbabilityResponse,
+    FileScoreResponse,
+    HealthResponse,
+    PredictionRequest,
+    PredictionResponse,
+    ScoreTargets,
+    public_validation_errors,
+)
 
 DEFAULT_MODEL_PATH = Path(__file__).parent / "artifacts" / "turnover_model.joblib"
 MAX_CSV_BYTES = 10 * 1024 * 1024
@@ -58,7 +70,7 @@ async def trace_validation_error(request: Request, error: RequestValidationError
     # Ne pas recopier input, ctx ou le corps JSON dans le journal des erreurs.
     errors = [
         {"location": list(item["loc"]), "message": item["msg"], "type": item["type"]}
-        for item in error.errors()
+        for item in error.errors()[:20]
     ]
     request.state.audit_error = {
         "message": "Requête invalide : "
@@ -68,7 +80,7 @@ async def trace_validation_error(request: Request, error: RequestValidationError
         "validation_errors": errors,
     }
     request.state.audit_error_type = "RequestValidationError"
-    return await request_validation_exception_handler(request, error)
+    return JSONResponse(status_code=422, content={"detail": public_validation_errors(error)})
 
 
 @app.middleware("http")
@@ -139,45 +151,6 @@ async def trace_exchange(request: Request, call_next):
     return response
 
 
-class PredictionRequest(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    features: dict[str, Any]
-
-
-class PredictionResponse(BaseModel):
-    probability: float
-    threshold: float
-    prediction: int
-    decision: str
-
-
-class EmployeeScoreResponse(PredictionResponse):
-    employee_id: int
-
-
-class FilePredictionResponse(BaseModel):
-    row_count: int
-    predictions: list[int]
-
-
-class FileProbabilityResponse(BaseModel):
-    row_count: int
-    classes: list[int]
-    probabilities: list[list[float]]
-
-
-class FileScoreResponse(BaseModel):
-    row_count: int
-    score: float
-    metric: str = "accuracy"
-    threshold: float
-    threshold_accuracy: float
-    threshold_precision: float
-    threshold_recall: float
-    threshold_f1: float
-
-
 def _read_csv(file: UploadFile, separator: str) -> pd.DataFrame:
     if not file.filename or not file.filename.lower().endswith(".csv"):
         raise HTTPException(status_code=422, detail="Envoyez un fichier .csv.")
@@ -222,22 +195,19 @@ def _uploaded_frame(
 
 def _file_features(frame: pd.DataFrame, artifact: dict[str, Any]) -> pd.DataFrame:
     expected = artifact["feature_names"]
-    missing = sorted(set(expected) - set(frame.columns))
-    unexpected = sorted(set(frame.columns) - set(expected))
-    if missing or unexpected:
-        raise HTTPException(
-            status_code=422,
-            detail={"missing_features": missing, "unexpected_features": unexpected},
-        )
     try:
-        numeric = frame.loc[:, expected].apply(pd.to_numeric, errors="raise").astype(float)
-    except (TypeError, ValueError, OverflowError) as error:
+        validated = BatchPredictionRequest.model_validate(
+            {"rows": [{"features": row} for row in frame.to_dict(orient="records")]},
+            context={"feature_names": expected},
+        )
+    except ValidationError as error:
+        for item in error.errors():
+            if item["type"] == "feature_columns":
+                raise HTTPException(status_code=422, detail=item["ctx"]) from error
         raise HTTPException(
-            status_code=422, detail="Les variables doivent être numériques."
+            status_code=422, detail={"validation_errors": public_validation_errors(error)}
         ) from error
-    if not np.isfinite(numeric.to_numpy()).all():
-        raise HTTPException(status_code=422, detail="Valeurs manquantes ou non finies dans le CSV.")
-    return numeric
+    return pd.DataFrame([row.features for row in validated.rows], columns=expected)
 
 
 @app.post("/predict/file", response_model=FilePredictionResponse, tags=["Fichiers CSV"])
@@ -268,7 +238,7 @@ def predict_proba_file(
 def score_file(
     request: Request,
     file: UploadFile,
-    target_column: str = Query(TARGET_COLUMN),
+    target_column: str = Query(TARGET_COLUMN, min_length=1, max_length=255, pattern=r"\S"),
     separator: str = Query(",", pattern="^[,;]$"),
 ):
     """Accuracy native et métriques au seuil optimisé, avec les vraies réponses."""
@@ -280,10 +250,13 @@ def score_file(
         )
     if target_column not in frame:
         raise HTTPException(status_code=422, detail=f"Colonne cible requise : {target_column}.")
-    labels = frame.pop(target_column).str.strip().str.lower().replace({"non": "0", "oui": "1"})
-    if not labels.isin(["0", "1"]).all():
-        raise HTTPException(status_code=422, detail="La cible doit contenir 0/1 ou Non/Oui.")
-    labels = labels.astype(int)
+    try:
+        validated = ScoreTargets.model_validate({"labels": frame.pop(target_column).tolist()})
+    except ValidationError as error:
+        raise HTTPException(
+            status_code=422, detail={"validation_errors": public_validation_errors(error)}
+        ) from error
+    labels = pd.Series(validated.labels)
     features = _file_features(frame, artifact)
     return inference.execute(
         request.state.exchange_id,
@@ -328,13 +301,13 @@ def get_model_bundle() -> dict[str, Any]:
         raise HTTPException(status_code=500, detail="Artefact de modèle invalide.") from error
 
 
-@app.get("/health")
+@app.get("/health", response_model=HealthResponse)
 def health() -> dict[str, str]:
     get_model_bundle()
     return {"status": "ok"}
 
 
-@app.get("/features")
+@app.get("/features", response_model=FeaturesResponse)
 def features() -> dict[str, list[str]]:
     return {"features": get_model_bundle()["feature_names"]}
 
@@ -348,33 +321,16 @@ def predict(request: Request, payload: PredictionRequest) -> PredictionResponse:
 def _score_features(
     supplied_features: dict[str, Any], artifact: dict[str, Any], exchange_id: str
 ) -> PredictionResponse:
-    expected_features = artifact["feature_names"]
-
-    missing = sorted(set(expected_features) - set(supplied_features))
-    unexpected = sorted(set(supplied_features) - set(expected_features))
-    if missing or unexpected:
-        raise HTTPException(
-            status_code=422,
-            detail={"missing_features": missing, "unexpected_features": unexpected},
-        )
-
-    try:
-        row = {name: float(supplied_features[name]) for name in expected_features}
-    except (TypeError, ValueError) as error:
-        raise HTTPException(
-            status_code=422, detail="Toutes les variables doivent être numériques."
-        ) from error
-    if not all(math.isfinite(value) for value in row.values()):
-        raise HTTPException(status_code=422, detail="Les variables doivent être des nombres finis.")
-
-    input_frame = pd.DataFrame([row], columns=expected_features)
+    input_frame = _file_features(pd.DataFrame([supplied_features]), artifact)
     return PredictionResponse(
         **inference.execute(exchange_id, "threshold_predict", input_frame, artifact)
     )
 
 
 @app.get("/employees/{employee_id}/score", response_model=EmployeeScoreResponse)
-def score_employee(employee_id: int, request: Request) -> EmployeeScoreResponse:
+def score_employee(
+    employee_id: Annotated[int, PathParameter(ge=1, le=2147483647)], request: Request
+) -> EmployeeScoreResponse:
     artifact = get_model_bundle()
     employee_values = inference.employee_features(employee_id, artifact)
     frame = _file_features(pd.DataFrame([employee_values]), artifact)

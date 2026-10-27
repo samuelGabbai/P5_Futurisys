@@ -5,12 +5,14 @@ create_db.py
 database.py
 inference.py
 pyproject.toml
+schemas.py
 hrnova_turnover_prediction.egg-info/PKG-INFO
 hrnova_turnover_prediction.egg-info/SOURCES.txt
 hrnova_turnover_prediction.egg-info/dependency_links.txt
 hrnova_turnover_prediction.egg-info/requires.txt
 hrnova_turnover_prediction.egg-info/top_level.txt
 tests/test_api.py
+tests/test_api_validation.py
 tests/test_audit.py
 tests/test_database.py
 tests/test_huggingface_publication.py

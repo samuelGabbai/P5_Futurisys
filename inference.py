@@ -10,6 +10,13 @@ from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_sc
 from sqlalchemy import select
 
 from database import ApiExchange, ModelInput, ModelOutput, ModelVersion, PreparedEmployee, session
+from schemas import (
+    EmployeeScoreResponse,
+    FilePredictionResponse,
+    FileProbabilityResponse,
+    FileScoreResponse,
+    PredictionResponse,
+)
 
 
 def employee_features(employee_id: int, artifact: dict) -> dict:
@@ -79,6 +86,15 @@ def execute(
     result, model_values = _calculate(operation, frame, truth, artifact)
     if employee_id is not None:
         result["employee_id"] = employee_id
+    response_schema = {
+        "predict": FilePredictionResponse,
+        "predict_proba": FileProbabilityResponse,
+        "score": FileScoreResponse,
+        "threshold_predict": (
+            EmployeeScoreResponse if employee_id is not None else PredictionResponse
+        ),
+    }[operation]
+    result = response_schema.model_validate(result).model_dump()
     payload = json.loads(json.dumps(result, allow_nan=False))
     model_values = json.loads(json.dumps(model_values, allow_nan=False))
 
@@ -95,13 +111,20 @@ def _calculate(
 ) -> tuple[dict, dict]:
     model = artifact["model"]
     if operation == "predict":
-        predictions = np.asarray(model.predict(frame)).astype(int).tolist()
+        predictions = np.asarray(model.predict(frame)).tolist()
         return {"row_count": len(frame), "predictions": predictions}, {"predict": predictions}
-    classes = [int(value) for value in model.classes_]
+    classes = np.asarray(model.classes_).tolist()
     positive = int(artifact["positive_class"])
     if set(classes) != {0, 1} or positive not in classes:
         raise HTTPException(status_code=500, detail="Le modèle doit être binaire 0/1.")
     probabilities = np.asarray(model.predict_proba(frame))
+    FileProbabilityResponse.model_validate(
+        {
+            "row_count": len(frame),
+            "classes": classes,
+            "probabilities": probabilities.tolist(),
+        }
+    )
     model_values = {"classes": classes, "predict_proba": probabilities.tolist()}
     if operation == "predict_proba":
         return {

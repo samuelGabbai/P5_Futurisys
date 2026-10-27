@@ -39,6 +39,7 @@ Requires-Dist: scipy>=1.11.0
 Provides-Extra: publish
 Requires-Dist: huggingface-hub<2,>=1.0; extra == "publish"
 Provides-Extra: api
+Requires-Dist: pydantic<3,>=2.7; extra == "api"
 Requires-Dist: sqlalchemy<3,>=2.0; extra == "api"
 Requires-Dist: psycopg[binary]<4,>=3.2; extra == "api"
 Requires-Dist: python-dotenv<2,>=1.0; extra == "api"
@@ -217,6 +218,12 @@ avec la variable `HRNOVA_MODEL_PATH`.
 
 ### Envoyer un CSV : predict, predict_proba et score
 
+Les entrées JSON et chaque ligne CSV sont validées avec **Pydantic** : variables
+attendues, nombres finis, cibles binaires et refus des valeurs nulles ou booléennes.
+Les sorties sont contrôlées avant enregistrement (classes, probabilités, dimensions
+et métriques). Le [guide de validation et de tests des endpoints](docs/api_validation.md)
+détaille les règles, les codes d'erreur et les tests individuels de chaque route.
+
 Les trois routes acceptent un fichier via le champ multipart `file` :
 
 | Route POST | Contenu du CSV | Résultat |
@@ -285,8 +292,8 @@ avec des rôles distincts d'administration et d'application.
 
 La pipeline prépare aussi un export du modèle pour Hugging Face. Après un push sur
 `main` et la réussite des vérifications, le job de publication l'envoie vers le dépôt
-Model configuré par `HF_REPO_ID`, avec le secret `HF_TOKEN`. Sans cette variable,
-la publication reste désactivée. Le [guide Hugging Face](docs/huggingface.md) détaille
+Model `SamGabb/hrnova`, avec le secret GitHub `HF_TOKEN`. La variable facultative
+`HF_REPO_ID` permet de changer de dépôt. Le [guide Hugging Face](docs/huggingface.md) détaille
 la configuration, les fichiers publiés et la mise à jour du modèle.
 
 Le workflow `.github/workflows/ci.yml` s'exécute à chaque push, à chaque pull request

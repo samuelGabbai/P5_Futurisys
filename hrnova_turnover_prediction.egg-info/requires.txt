@@ -16,6 +16,7 @@ scipy>=1.11.0
 hrnova-turnover-prediction[dev,notebook,quality]
 
 [api]
+pydantic<3,>=2.7
 sqlalchemy<3,>=2.0
 psycopg[binary]<4,>=3.2
 python-dotenv<2,>=1.0

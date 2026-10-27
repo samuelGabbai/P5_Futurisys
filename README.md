@@ -150,6 +150,12 @@ avec la variable `HRNOVA_MODEL_PATH`.
 
 ### Envoyer un CSV : predict, predict_proba et score
 
+Les entrées JSON et chaque ligne CSV sont validées avec **Pydantic** : variables
+attendues, nombres finis, cibles binaires et refus des valeurs nulles ou booléennes.
+Les sorties sont contrôlées avant enregistrement (classes, probabilités, dimensions
+et métriques). Le [guide de validation et de tests des endpoints](docs/api_validation.md)
+détaille les règles, les codes d'erreur et les tests individuels de chaque route.
+
 Les trois routes acceptent un fichier via le champ multipart `file` :
 
 | Route POST | Contenu du CSV | Résultat |
