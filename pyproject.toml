@@ -45,6 +45,10 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+docs = [
+    "mkdocs>=1.6,<2",
+    "mkdocs-material>=9.6,<10",
+]
 publish = [
     "huggingface-hub>=1.0,<2",
 ]
@@ -82,10 +86,10 @@ all = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/example/hrnova"
-Documentation = "https://github.com/example/hrnova"
-Repository = "https://github.com/example/hrnova.git"
-Issues = "https://github.com/example/hrnova/issues"
+Homepage = "https://github.com/samuelGabbai/P5_Futurisys"
+Documentation = "https://github.com/samuelGabbai/P5_Futurisys/tree/main/docs"
+Repository = "https://github.com/samuelGabbai/P5_Futurisys.git"
+Issues = "https://github.com/samuelGabbai/P5_Futurisys/issues"
 
 [tool.setuptools]
 packages = []

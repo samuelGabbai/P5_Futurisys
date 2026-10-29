@@ -11,7 +11,8 @@ permissions:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  # Ne pas interrompre un push en cours de déploiement ou de retour arrière.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' || github.event_name == 'merge_group' }}
 
 jobs:
   test-and-build:
@@ -48,7 +49,7 @@ jobs:
           cache-dependency-glob: uv.lock
 
       - name: Installer les dépendances verrouillées
-        run: uv sync --locked --extra api --extra dev
+        run: uv sync --locked --extra api --extra dev --extra docs
 
       - name: Exécuter les tests et mesurer la couverture
         run: uv run --no-sync pytest --cov-report=xml --junitxml=reports/junit.xml
@@ -67,6 +68,19 @@ jobs:
 
       - name: Construire le package Python
         run: uv build
+
+      - name: Exporter le contrat API et vérifier la documentation
+        run: |
+          uv run --no-sync python scripts/export_openapi.py
+          uv run --no-sync mkdocs build --strict
+
+      - name: Conserver la documentation HTML
+        uses: actions/upload-artifact@v4
+        with:
+          name: documentation-html
+          path: site/
+          retention-days: 14
+          if-no-files-found: error
 
       - name: Préparer l'export Hugging Face sans lignes salariées
         run: uv run --no-sync python scripts/publish_huggingface.py --prepare-only
@@ -188,3 +202,65 @@ jobs:
         run: |
           uv run --no-sync python -c 'import os; from pathlib import Path; assert os.environ["HRNOVA_MODEL_PATH"].strip(), "HRNOVA_MODEL_PATH doit être renseigné"; assert Path(os.environ["HRNOVA_MODEL_PATH"]).suffix == ".joblib", "Le modèle doit être un fichier .joblib"'
           uv run --no-sync pytest --no-cov
+
+  build-api-image:
+    name: Construire l'image API à déployer
+    needs: [test-and-build, environment-validation]
+    if: >-
+      vars.ENABLE_API_DEPLOYMENT == 'true' &&
+      (github.event_name == 'push' || github.event_name == 'workflow_dispatch') &&
+      contains(fromJSON('["refs/heads/development", "refs/heads/develop", "refs/heads/main"]'), github.ref)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Construire l'image liée au commit validé
+        env:
+          SOURCE_SHA: ${{ github.sha }}
+        run: |
+          docker build --label "org.opencontainers.image.revision=$SOURCE_SHA" --tag "hrnova-api:$SOURCE_SHA" .
+          docker save --output api-image.tar "hrnova-api:$SOURCE_SHA"
+      - name: Transmettre l'image au runner de déploiement
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-image-${{ github.sha }}
+          path: api-image.tar
+          retention-days: 3
+          compression-level: 0
+          if-no-files-found: error
+
+  deploy-api:
+    name: Déployer l'API dans l'environnement cible
+    needs: build-api-image
+    # Ces runners dédiés n'exécutent jamais les pull requests ou les branches libres.
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - ${{ github.ref == 'refs/heads/main' && 'hrnova-production' || github.ref == 'refs/heads/develop' && 'hrnova-staging' || 'hrnova-development' }}
+    timeout-minutes: 15
+    environment:
+      name: ${{ github.ref == 'refs/heads/main' && 'production' || github.ref == 'refs/heads/develop' && 'staging' || 'development' }}
+    concurrency:
+      group: api-deployment-${{ github.ref }}
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          name: api-image-${{ github.sha }}
+          path: deployment-image/
+      - name: Charger l'image validée
+        run: docker load --input deployment-image/api-image.tar
+      - name: Déployer, vérifier et restaurer en cas d'échec
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          APP_ENV: ${{ github.ref == 'refs/heads/main' && 'production' || github.ref == 'refs/heads/develop' && 'staging' || 'development' }}
+          API_PORT: ${{ vars.API_PORT }}
+          API_BIND_HOST: ${{ vars.API_BIND_HOST || '127.0.0.1' }}
+          SOURCE_SHA: ${{ github.sha }}
+        run: python3 scripts/deploy_api.py --environment "$APP_ENV" --image "hrnova-api:$SOURCE_SHA"

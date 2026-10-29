@@ -82,7 +82,7 @@ erDiagram
 ```
 
 Le diagramme abrège les colonnes métier : le schéma SQL complet se trouve dans
-[`schema.sql`](schema.sql) et les classes ORM dans [`database.py`](../database.py).
+[`schema.sql`](schema.sql) et les classes ORM dans [`database.py`](https://github.com/samuelGabbai/P5_Futurisys/blob/main/database.py).
 Les colonnes métier sont typées et non nulles. Les clés étrangères garantissent
 les liens entre sources. Un couple `(exchange_id, row_index)` ne peut pas être dupliqué.
 Les index portent sur les dates, routes, statuts et identifiants de requêtes.
@@ -176,7 +176,7 @@ sequenceDiagram
     A-->>C: Résultat et en-tête X-Request-ID
 ```
 
-Tous les appels au modèle sont centralisés dans [`inference.py`](../inference.py).
+Tous les appels au modèle sont centralisés dans [`inference.py`](https://github.com/samuelGabbai/P5_Futurisys/blob/main/inference.py).
 Les routes JSON, CSV et salarié par ID utilisent ce circuit. La route par ID lit les
 variables dans `prepared_employees`, sans utiliser le dictionnaire embarqué dans le modèle.
 `model_outputs.payload` conserve le résultat métier renvoyé ; `model_values` conserve

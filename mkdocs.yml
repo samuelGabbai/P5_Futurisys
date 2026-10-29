@@ -1,0 +1,50 @@
+site_name: HRNova — Modèle et API
+site_description: Utilisation, architecture, performances et maintenance du modèle de turnover HRNova.
+repo_url: https://github.com/samuelGabbai/P5_Futurisys
+repo_name: samuelGabbai/P5_Futurisys
+edit_uri: blob/main/docs/
+dev_addr: 127.0.0.1:8001
+theme:
+  name: material
+  language: fr
+  font: false
+  features:
+    - navigation.sections
+    - content.code.copy
+plugins:
+  - search:
+      lang: fr
+markdown_extensions:
+  - tables
+  - admonition
+  - toc:
+      permalink: true
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+validation:
+  nav:
+    omitted_files: warn
+    not_found: warn
+  links:
+    not_found: warn
+    anchors: warn
+nav:
+  - Accueil: index.md
+  - Installation et configuration: installation.md
+  - API:
+      - Référence et exemples: api.md
+      - Validation Pydantic et tests: api_validation.md
+      - Logs et diagnostic: api_logs.md
+  - Modèle:
+      - Données, entraînement et performances: model.md
+      - Contrat des 43 variables: features.md
+  - Architecture et PostgreSQL:
+      - Architecture et choix techniques: architecture.md
+      - Schéma et import de la base: database.md
+  - Exploitation:
+      - Déploiement et CI/CD: deployment.md
+      - Publication Hugging Face: huggingface.md
+      - Maintenance et mises à jour: maintenance.md

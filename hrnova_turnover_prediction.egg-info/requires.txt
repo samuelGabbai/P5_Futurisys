@@ -34,6 +34,10 @@ mypy>=1.7.0
 isort>=5.13.0
 pre-commit>=3.5.0
 
+[docs]
+mkdocs<2,>=1.6
+mkdocs-material<10,>=9.6
+
 [notebook]
 jupyter>=1.0.0
 jupyterlab>=4.0.0

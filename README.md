@@ -1,364 +1,211 @@
 # HRNova — Prédiction du départ des salariés
 
-Projet 4 · TechNova Partners
+HRNova estime le risque de départ d'un salarié dans le cas d'étude TechNova Partners.
+Le projet associe un modèle scikit-learn calibré, une API FastAPI validée avec
+Pydantic et une base PostgreSQL qui conserve les entrées, sorties et échanges API.
 
-Ce projet a pour objectif de prédire le risque de départ d’un salarié au sein d’une entreprise, à partir de données RH, d’évaluations et de sondages. L’objectif est d’identifier les facteurs associés au turnover et de construire un modèle exploitable pour la décision métier.
+L'API attend des variables numériques **déjà préparées et encodées**. Le notebook
+réalise la préparation, l'entraînement et l'évaluation ; il ne s'exécute pas à chaque
+requête ni automatiquement à chaque push.
 
-## Sommaire
+## Documentation
 
-- [Contexte métier](#contexte-métier)
-- [Objectifs](#objectifs)
-- [Structure du projet](#structure-du-projet)
-- [Données](#données)
-- [Installation](#installation)
-- [Usage](#usage)
-- [Base PostgreSQL et traçabilité](#base-postgresql-et-traçabilité)
-- [Méthodologie](#méthodologie)
-- [Modèle retenu](#modèle-retenu)
-- [Interprétabilité](#interprétabilité)
-- [Résultats attendus](#résultats-attendus)
-- [Limitations et améliorations possibles](#limitations-et-améliorations-possibles)
-- [Auteur](#auteur)
+| Besoin | Guide |
+| --- | --- |
+| Vue d'ensemble et parcours utilisateur | [Accueil](docs/index.md) |
+| Installer et configurer le projet | [Installation](docs/installation.md) |
+| Endpoints, Swagger, JSON/CSV et exemples Python | [Référence API](docs/api.md) |
+| Contraintes Pydantic et tests de chaque endpoint | [Validation](docs/api_validation.md) |
+| Données, choix du modèle, performances et limites | [Fiche modèle](docs/model.md) |
+| Signification des 43 variables | [Contrat d'entrée](docs/features.md) |
+| Composants et choix techniques | [Architecture](docs/architecture.md) |
+| Schéma relationnel, import et traçabilité | [PostgreSQL](docs/database.md) |
+| Logs lisibles dans DBeaver | [Logs API](docs/api_logs.md) |
+| Environnements, CI/CD et lancement du service | [Déploiement](docs/deployment.md) |
+| Publication automatique dans SamGabb/hrnova | [Hugging Face](docs/huggingface.md) |
+| Mises à jour, sauvegardes, retour arrière et diagnostic | [Maintenance](docs/maintenance.md) |
 
-## Contexte métier
-
-Les départs au sein d’une organisation peuvent avoir un coût important en termes de recrutement, de productivité, de connaissance métier et de performance globale. Il est donc utile de détecter précocement les salariés les plus à risque de quitter l’entreprise afin de mettre en place des actions ciblées.
-
-Le projet s’inscrit dans une logique :
-
-- d’analyse des facteurs de départ,
-- de modélisation prédictive,
-- d’interprétation des décisions du modèle,
-- de définition d’un seuil de décision adapté à un contexte déséquilibré.
-
-## Objectifs
-
-- Comprendre la structure et la qualité des données RH ;
-- Fusionner plusieurs sources de données ;
-- Nettoyer et transformer les variables ;
-- Construire un modèle de classification binaire ;
-- Optimiser le seuil de décision afin de maximiser le compromis précision/rappel ;
-- Interpréter les résultats avec des méthodes explicables (SHAP, importance des variables).
-
-## Structure du projet
-
-```text
-Projet4Rendu/
-├── README.md
-├── pyproject.toml
-├── uv.lock
-├── .gitignore
-├── Data/
-│   ├── extrait_eval.csv
-│   ├── extrait_sirh.csv
-│   └── extrait_sondage.csv
-├── dataScientistTechNova.ipynb
-└── profiling_*.html
-```
-
-## Données
-
-Le projet s’appuie sur 3 jeux de données :
-
-- `extrait_sondage.csv` : informations collectées via le sondage RH, notamment les variables liées à l’engagement, à la satisfaction et au profil du salarié ;
-- `extrait_sirh.csv` : données de ressources humaines et de gestion des employés ;
-- `extrait_eval.csv` : données liées aux évaluations et aux performances.
-
-La cible est :
-
-```text
-a_quitte_l_entreprise
-```
-
-avec une variable binaire :
-
-- `Non` : le salarié est resté
-- `Oui` : le salarié a quitté l’entreprise
-
-## Installation
-
-Ce projet utilise `uv` pour gérer l’environnement Python et les dépendances.
-
-### Prérequis
-
-- Python >= 3.13
-- uv installé sur votre machine
-
-### Installation du projet
-
-Depuis la racine du projet :
+Les guides sont consultables directement dans GitHub. Pour ouvrir la documentation
+MkDocs avec recherche et diagrammes :
 
 ```bash
-cd /Users/samuelgabbai/Documents/workspaceIT/formation_datascientist/Projet4Rendu
-uv sync
+uv sync --locked --extra api --extra dev --extra docs
+uv run --no-sync mkdocs serve
 ```
 
-### Ajouter ou mettre à jour une dépendance
+Documentation : **http://127.0.0.1:8001**. Ce port est distinct de celui de l'API.
+
+## Démarrage rapide
+
+Prérequis : Git, uv, Python **3.13 recommandé** et PostgreSQL **18**.
+Le package déclare Python >= 3.10 ; la CI vérifie actuellement Python 3.13.
 
 ```bash
-uv add nom_du_paquet
-```
-
-ou
-
-```bash
-uv lock --upgrade
-uv sync
-```
-
-## Usage
-
-### Lancer le notebook
-
-```bash
-cd /Users/samuelgabbai/Documents/workspaceIT/formation_datascientist/Projet4Rendu
-uv run jupyter notebook
-```
-
-ou ouvrir directement :
-
-```text
-dataScientistTechNova.ipynb
-```
-
-dans VS Code / Jupyter.
-
-### Vérifier les dépendances
-
-```bash
-uv pip list
-```
-
-### Lancer l'API de prédiction
-
-Après avoir exécuté le notebook jusqu'à la cellule d'export, le modèle calibré et son seuil sont
-enregistrés dans `artifacts/turnover_model.joblib`.
-
-```bash
-uv sync --extra api
+git clone https://github.com/samuelGabbai/P5_Futurisys.git
+cd P5_Futurisys
+uv sync --locked --python 3.13 --extra api --extra dev
 uv run --no-sync python scripts/local_postgres.py start
-uv run uvicorn api:app --reload
+uv run --no-sync uvicorn api:app --host 127.0.0.1 --port 8000 --reload
 ```
 
-La documentation interactive est disponible sur <http://127.0.0.1:8000/docs>. L'API expose
-`GET /health`, `GET /features`, `POST /predict` et `GET /employees/{employee_id}/score`.
-La route par ID renvoie le score d'un salarié présent dans les sources du notebook, par exemple
-`GET /employees/1001/score`. `POST /predict` attend, sous `features`, les variables numériques
-déjà préparées et encodées ; `GET /features` fournit leurs noms exacts. Les résultats incluent la
-probabilité estimée, le seuil optimisé et la décision. Le chemin de l'artefact peut être remplacé
-avec la variable `HRNOVA_MODEL_PATH`.
+Le script PostgreSQL utilise par défaut les binaires Mac dans
+`/Library/PostgreSQL/18/bin`. Sur une autre installation, ajouter
+`--pg-bin /chemin/vers/postgresql/bin`, ou suivre le guide pour un serveur
+PostgreSQL existant.
 
-### Envoyer un CSV : predict, predict_proba et score
+L'instance locale utilise la base **hrnova**, l'hôte **127.0.0.1**, le port **5433**
+et le rôle applicatif **hrnova_app**. Les identifiants sont générés dans `.env`
+et `.local/admin.env`, ignorés par Git. Les sources et l'artefact complet sont
+importés sans supprimer l'historique d'une base existante.
 
-Les entrées JSON et chaque ligne CSV sont validées avec **Pydantic** : variables
-attendues, nombres finis, cibles binaires et refus des valeurs nulles ou booléennes.
-Les sorties sont contrôlées avant enregistrement (classes, probabilités, dimensions
-et métriques). Le [guide de validation et de tests des endpoints](docs/api_validation.md)
-détaille les règles, les codes d'erreur et les tests individuels de chaque route.
-
-Les trois routes acceptent un fichier via le champ multipart `file` :
-
-| Route POST | Contenu du CSV | Résultat |
-| --- | --- | --- |
-| `/predict/file` | Variables du modèle | Classes prédites avec `model.predict` |
-| `/predict-proba/file` | Variables du modèle | Probabilités avec `model.predict_proba` et ordre des classes |
-| `/score/file` | Variables et vraies réponses | Accuracy avec `model.score`, puis accuracy, précision, rappel et F1 au seuil optimisé |
-
-Lancer l'API puis ouvrir <http://127.0.0.1:8000/docs>. Dans **Fichiers CSV**, sélectionner
-une route, cliquer sur **Try it out**, choisir le fichier et cliquer sur **Execute**.
+Swagger : **http://127.0.0.1:8000/docs** · ReDoc : **http://127.0.0.1:8000/redoc**.
 
 ```bash
-uv sync --locked --extra api
-uv run --no-sync python scripts/local_postgres.py start
-uv run --no-sync uvicorn api:app --reload
+curl -i http://127.0.0.1:8000/health
+curl -i http://127.0.0.1:8000/employees/1/score
 ```
 
-Le fichier doit être un **CSV UTF-8**, avec une ligne d'en-tête et au moins une ligne de données,
-limité à 10 Mio. Les noms des colonnes doivent correspondre exactement à `GET /features`.
-Leur ordre est libre. Les variables doivent être numériques, déjà préparées et encodées,
-sans valeur manquante ou infinie. Les CSV RH bruts du dossier `Data/` doivent donc passer
-par la préparation du notebook avant leur envoi. Ne pas ajouter de colonne d'identifiant.
-Les résultats suivent l'ordre des lignes du fichier.
+L'API refuse une inférence si la BDD n'est pas disponible. Après un redémarrage
+du Mac, relancer PostgreSQL avec le script `start`.
 
-Pour `/score/file`, ajouter la colonne `a_quitte_l_entreprise` avec les réponses réelles
-(`0`/`1` ou `Non`/`Oui`). Un autre nom est possible avec `?target_column=nom_colonne`.
-Pour un CSV séparé par des points-virgules, ajouter `?separator=%3B`.
+## Utiliser l'API
+
+| Endpoint | Fonction |
+| --- | --- |
+| `GET /health` | Vérifier la disponibilité locale et le chargement du modèle |
+| `GET /features` | Obtenir les noms exacts des variables attendues |
+| `POST /predict` | Prédiction JSON au seuil optimisé |
+| `POST /predict/file` | Classes natives pour un fichier CSV |
+| `POST /predict-proba/file` | Probabilités par classe pour un CSV |
+| `POST /score/file` | Accuracy native et métriques au seuil optimisé, avec vraies réponses |
+| `GET /employees/{employee_id}/score` | Score au seuil optimisé à partir des variables en BDD |
+
+Des exemples synthétiques complets sont fournis dans `examples/` :
 
 ```bash
-curl -X POST http://127.0.0.1:8000/predict/file \
-  -F 'file=@employes_prepares.csv'
+curl -X POST http://127.0.0.1:8000/predict \
+  -H 'Content-Type: application/json' --data-binary @examples/predict.json
 
 curl -X POST http://127.0.0.1:8000/predict-proba/file \
-  -F 'file=@employes_prepares.csv'
+  -F 'file=@examples/employees.csv'
 
 curl -X POST http://127.0.0.1:8000/score/file \
-  -F 'file=@employes_prepares_avec_cible.csv'
+  -F 'file=@examples/employees_with_target.csv'
 ```
 
-`predictions` contient une classe par ligne. Dans `probabilities`, chaque ligne contient
-les probabilités dans l'ordre du tableau `classes`. Le champ `score` mesure la proportion
-de bonnes prédictions natives. Les champs `threshold_*` évaluent la décision au seuil
-optimisé du notebook ; ils peuvent différer du score natif. La route JSON `/predict`
-existante continue à utiliser ce seuil optimisé.
+Les fichiers doivent être UTF-8, numériques et limités à 10 Mio. La cible réelle
+est nécessaire uniquement pour le score. Les exemples contiennent des profils
+et des cibles fictifs ; ils démontrent le contrat, pas les performances.
 
-L'envoi de fichiers utilise [UploadFile de FastAPI](https://fastapi.tiangolo.com/tutorial/request-files/).
-La définition du score suit celle du [modèle calibré scikit-learn](https://scikit-learn.org/1.7/modules/generated/sklearn.calibration.CalibratedClassifierCV.html).
+Le seuil optimisé diffère de la règle native de `model.predict` : les routes JSON
+et par ID peuvent donc produire une décision différente de `/predict/file`.
+Les erreurs, formats et conventions sont détaillés dans [la référence API](docs/api.md).
 
-## Base PostgreSQL et traçabilité
+## Données et résultats du modèle
 
-Les [logs API détaillés](docs/api_logs.md) sont consultables dans DBeaver via la vue
-`public.api_logs` : message, durée, fichier, nombre de lignes, étape atteinte et cause des erreurs.
+Les sources `Data/extrait_sirh.csv`, `Data/extrait_sondage.csv` et
+`Data/extrait_eval.csv` comportent chacune **1 470 lignes**. La cible
+`a_quitte_l_entreprise` contient 1 233 `Non` (0) et 237 `Oui` (1).
 
-L'API utilise obligatoirement PostgreSQL pour enregistrer puis relire chaque entrée
-du modèle et chaque résultat. La base locale `hrnova` contient les trois CSV complets,
-les variables préparées et les journaux d'échanges. Chaque réponse porte un en-tête
-`X-Request-ID` permettant de retrouver ses inputs et outputs. Sans BDD, l'API renvoie 503.
+Le modèle publié est un **Random Forest calibré par méthode sigmoid**,
+avec 43 variables et un seuil optimisé de **0,2231813754**.
+Le notebook utilise 1 176 lignes d'entraînement et 294 de test, stratifiées.
 
-Le [guide PostgreSQL](docs/database.md) contient le schéma relationnel, les commandes
-de création/import, les droits d'accès et les exemples SQL. Le script
-[`create_db.py`](create_db.py) réalise l'import transactionnel et idempotent ;
-[`scripts/local_postgres.py`](scripts/local_postgres.py) provisionne une instance locale
-avec des rôles distincts d'administration et d'application.
+Résultats enregistrés dans le notebook, cellule 41, examinés le 27 octobre 2026 :
 
-## Intégration continue (GitHub Actions)
+| Métrique de test | Seuil optimisé |
+| --- | --- |
+| Accuracy | 0,8027 |
+| Précision | 0,4203 |
+| Rappel | 0,6170 |
+| F1 | 0,5000 |
+| ROC-AUC | 0,7692 |
 
-La pipeline prépare aussi un export du modèle pour Hugging Face. Après un push sur
-`main` et la réussite des vérifications, le job de publication l'envoie vers le dépôt
-Model `SamGabb/hrnova`, avec le secret GitHub `HF_TOKEN`. La variable facultative
-`HF_REPO_ID` permet de changer de dépôt. Le [guide Hugging Face](docs/huggingface.md) détaille
-la configuration, les fichiers publiés et la mise à jour du modèle.
+Ces résultats ne sont pas une mesure de production. Le prétraitement actuel ajuste
+certaines références avant le split train/test ; cette limite peut influencer
+l'évaluation. La [fiche modèle](docs/model.md) détaille la comparaison avec les
+baselines, la calibration, les limites et les améliorations nécessaires.
 
-Le workflow `.github/workflows/ci.yml` s'exécute à chaque push, à chaque pull request
-et manuellement depuis l'onglet **Actions** de GitHub. Il utilise Python 3.13 et installe
-les dépendances avec `uv sync --locked --extra api --extra dev` pour respecter `uv.lock`.
-
-Il exécute les tests de l'API avec mesure de couverture, puis construit le package Python
-(wheel et archive source). Les rapports de tests et de couverture ainsi que le package
-sont téléchargeables dans les artefacts de l'exécution pendant 14 jours.
-Les tests utilisent un modèle simulé et ne nécessitent pas de réentraîner le notebook.
-La CI démarre également PostgreSQL 18 pour vérifier l'import du dataset complet et
-la traçabilité, dans des schémas isolés supprimés après chaque test.
-Aucun secret n'est nécessaire ; ce workflow ne déploie pas l'API.
-
-### Tests automatiques et validation avant fusion
-
-Chaque push vers n'importe quelle branche déclenche les tests. Un commit uniquement local
-ne déclenche pas GitHub Actions : il est vérifié lorsqu'il est poussé sur GitHub.
-Les pull requests déclenchent aussi les tests sur le résultat de la fusion proposée.
-L'événement `merge_group` prend en charge une éventuelle file de fusion GitHub.
-Le contrôle **Validation avant fusion** échoue si les tests ou la construction échouent.
-
-Pour bloquer effectivement les fusions, après une première exécution du workflow,
-configurer une protection pour `main` et `develop` dans **Settings → Branches**
-(ou un ruleset dans **Settings → Rules → Rulesets**) :
-
-1. Exiger une pull request avant fusion (**Require a pull request before merging**).
-2. Exiger les contrôles réussis (**Require status checks to pass before merging**)
-   et sélectionner **Validation avant fusion**.
-3. Exiger une branche à jour (**Require branches to be up to date before merging**).
-4. Appliquer les règles aux administrateurs et éviter les autorisations de contournement.
-
-Ces paramètres sont des réglages du dépôt GitHub ; le fichier YAML seul ne peut pas
-interdire une fusion. Ils restent à activer sur le dépôt.
-
-### Gestion des environnements
-
-Après une CI réussie, les push et lancements manuels exécutent un job supplémentaire
-dans l'environnement GitHub correspondant à la branche :
-
-| Branche | Environnement GitHub | Usage |
-| --- | --- | --- |
-| Branches de travail | `development` | Validation pendant le développement |
-| `develop` | `staging` | Validation avant production |
-| `main` | `production` | Validation de la version principale |
-
-Dans **Settings → Environments**, créer ces trois environnements. Limiter `staging`
-à la branche `develop` et `production` à `main` avec les règles de branches autorisées.
-Pour `production`, ajouter un approbateur obligatoire si cette option est disponible
-pour le dépôt. Laisser `development` accessible aux branches de travail.
-
-Chaque environnement peut définir la variable **HRNOVA_MODEL_PATH**, utilisée par
-l'API pour choisir son modèle. Sans valeur spécifique, le workflow utilise
-`artifacts/turnover_model.joblib`. Les futurs identifiants de services doivent être
-enregistrés dans les **secrets de l'environnement** concerné.
-
-Le job vérifie que le chemin configuré est non vide et se termine par `.joblib`, puis
-relance les tests avec cette configuration. Les tests utilisent un modèle simulé :
-ils ne valident ni la présence ni la qualité d'un modèle réel. Aucun serveur n'est
-déployé par ce workflow. Les pull requests exécutent la CI sans accéder aux
-environnements cibles, afin que leurs contrôles n'attendent pas une approbation de production.
-
-Références : [protection des branches](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches)
-et [environnements GitHub Actions](https://docs.github.com/en/actions/reference/workflows-and-actions/deployments-and-environments).
-
-Pour reproduire les vérifications localement :
+Pour travailler sur le notebook :
 
 ```bash
-uv sync --locked --extra api --extra dev
+uv sync --locked --extra api --extra dev --extra notebook
+uv run --no-sync jupyter lab dataScientistTechNova.ipynb
+```
+
+## Traçabilité et configuration
+
+Chaque requête reçoit un `X-Request-ID`. Le service enregistre puis relit les
+inputs avant le calcul et les outputs avant la réponse. La vue `public.api_logs`
+regroupe messages, durées, étapes et erreurs ; les tables dédiées conservent
+les données et le hash du modèle. Les incidents initiaux de BDD restent dans les
+logs du processus, et un arrêt brutal peut laisser une requête `pending`.
+
+`DATABASE_URL` configure PostgreSQL et `HRNOVA_MODEL_PATH` le fichier de modèle.
+La liste complète des variables et des droits se trouve dans
+[la configuration](docs/installation.md#variables-de-configuration).
+L'API est conçue pour l'usage local et n'a pas d'authentification HTTP.
+
+## Tests, documentation et déploiement
+
+```bash
+uv sync --locked --extra api --extra dev --extra docs
 uv run --no-sync pytest --cov-report=xml --junitxml=reports/junit.xml
+uv run --no-sync python scripts/export_openapi.py
+uv run --no-sync mkdocs build --strict
 uv build
 ```
 
-## Méthodologie
+Le workflow GitHub Actions lance les tests avec PostgreSQL à chaque push et PR,
+construit la documentation et le package et prépare l'export du modèle.
+Configurer la protection des branches avec le contrôle **Validation avant fusion**
+pour bloquer effectivement les fusions si les vérifications échouent.
 
-Le projet suit une logique de data science structurée :
+Les push sur `main` publient ensuite le modèle vers
+[SamGabb/hrnova](https://huggingface.co/SamGabb/hrnova), après validation de
+l'environnement `production`. Le secret GitHub `HF_TOKEN` doit autoriser l'écriture ;
+`HF_REPO_ID` peut remplacer le dépôt cible. Aucun secret Hugging Face n'est requis
+pour les tests ou la documentation. L'export exclut le dictionnaire des salariés.
 
-1. Analyse exploratoire des datasets
-2. Contrôle de qualité des données
-3. Nettoyage et fusion des tables
-4. Encodage et feature engineering
-5. Préparation du jeu d’entraînement / test
-6. Comparaison de plusieurs modèles
-7. Optimisation du Random Forest
-8. Calibration des probabilités
-9. Ajustement du seuil de décision
-10. Interprétation globale et locale avec SHAP
+Les environnements `development`, `staging` et `production` séparent les validations,
+secrets et déploiements. Le déploiement Docker de l'API est disponible sur les
+branches `development`, `develop` et `main`, après activation de la variable GitHub
+`ENABLE_API_DEPLOYMENT=true` et configuration de runners dédiés. Le script vérifie
+la base et le modèle, démarre l'API et teste une prédiction tracée ; en cas d'échec,
+il tente de restaurer l'image précédente. Les bases PostgreSQL sont provisionnées
+et initialisées séparément. Les configurations et commandes sont dans
+[le guide de déploiement](docs/deployment.md#activer-le-deploiement-api-dans-github-actions).
+Le déploiement n'est pas activé dans GitHub par la modification des fichiers locaux.
 
-## Modèle retenu
+## Structure du dépôt
 
-Le modèle principal est un Random Forest, calibré à l’aide de `CalibratedClassifierCV`, puis évalué avec un seuil optimisé selon le F1 de la classe minoritaire.
+```text
+P5_Futurisys/
+├── api.py / schemas.py       # Routes et contrats Pydantic
+├── inference.py / audit.py   # Inférences tracées et journal HTTP
+├── database.py / create_db.py
+├── Data/                    # Trois sources CSV
+├── artifacts/               # Artefact complet de confiance
+├── dataScientistTechNova.ipynb
+├── scripts/                 # PostgreSQL, vérification, OpenAPI, publication
+├── tests/
+├── examples/                # JSON et CSV synthétiques
+├── docs/ / mkdocs.yml        # Guides, schémas et performances
+├── .github/workflows/ci.yml
+└── pyproject.toml / uv.lock
+```
 
-Les modèles comparés incluent notamment :
+## Maintenance et contribution
 
-- DummyClassifier
-- LogisticRegression
-- RandomForest
-- LightGBM
-- RandomForest + SMOTE
+À chaque mise à jour du modèle, conserver le commit, les métriques et le hash,
+réimporter les variables préparées puis redémarrer l'API. Le protocole de revue
+mensuelle, d'évaluation trimestrielle et de retour arrière est décrit dans
+[la maintenance](docs/maintenance.md).
 
-## Interprétabilité
+Pour une modification : créer une branche, mettre à jour tests et documentation,
+exécuter les vérifications puis ouvrir une PR. Signaler un problème dans
+[les issues](https://github.com/samuelGabbai/P5_Futurisys/issues) avec le message
+d'erreur et le `X-Request-ID`, sans mot de passe, token ou données RH.
 
-Une partie importante du projet porte sur l’explicabilité du modèle :
-
-- importance native du modèle ;
-- importance par permutation ;
-- SHAP Beeswarm Plot ;
-- SHAP Waterfall Plot local pour des salariés spécifiques.
-
-Cela permet d’expliquer non seulement le score global du modèle, mais aussi les facteurs qui poussent un salarié vers un risque de départ.
-
-## Résultats attendus
-
-Le projet vise à obtenir un modèle capable de :
-
-- détecter les salariés à risque de départ avec un bon rappel ;
-- conserver une précision opérationnelle suffisante ;
-- exploiter un seuil de décision mieux adapté à la cible minoritaire ;
-- fournir des éléments interprétables pour les décideurs RH.
-
-## Limites et améliorations possibles
-
-- Ajouter de nouvelles sources de données métier (absentéisme, mobilité, historique salariale, etc.) ;
-- Tester d’autres modèles ou hyperparamètres ;
-- Utiliser un pipeline de validation plus robuste ;
-- Mettre en place un monitoring si le modèle doit être déployé ;
-- Comparer plusieurs seuils selon les coûts métier (fausses négatives vs fausses positives).
-
-## Auteur
-
-Samuel GABBAI
-Projet réalisé dans le cadre du projet 4 de la formation Data Scientist.
-
-
----
+Auteur : **Samuel Gabbai** — cas d'étude Data Science TechNova Partners.
 

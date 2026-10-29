@@ -1,0 +1,29 @@
+{
+  "reviewed_on": "2026-10-27",
+  "source": "Saved notebook outputs, not recomputed during documentation",
+  "notebook": "dataScientistTechNova.ipynb",
+  "notebook_sha256": "ad7b083df1a5e1e6e5e570bb3ee0870efc98cd679b59226465dd010eee56353d",
+  "notebook_test_cell_zero_based": 41,
+  "artifact": "artifacts/turnover_model.joblib",
+  "artifact_sha256": "fa2ae25a7c53a911e5aea093472e548023afce6dfd0c7f162edac728b51290b0",
+  "feature_count": 43,
+  "train_rows": 1176,
+  "test_rows": 294,
+  "test_positive_rows": 47,
+  "optimized_threshold": 0.22318137541604238,
+  "reported_test_metrics_rounded": {
+    "native_threshold_0_5": {
+      "accuracy": 0.816327, "precision": 0.347826, "recall": 0.170213,
+      "f1": 0.228571, "roc_auc": 0.769231, "brier": 0.122596, "log_loss": 0.38898
+    },
+    "optimized_threshold": {
+      "accuracy": 0.802721, "precision": 0.42029, "recall": 0.617021,
+      "f1": 0.5, "roc_auc": 0.769231, "brier": 0.122596, "log_loss": 0.38898
+    }
+  },
+  "limitations": [
+    "Feature engineering reference medians and one-hot encoder fitted before train/test split",
+    "No independent external or temporal evaluation",
+    "No confidence intervals reported"
+  ]
+}

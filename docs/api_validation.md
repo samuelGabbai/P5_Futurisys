@@ -1,6 +1,6 @@
 # Validation Pydantic et tests des endpoints
 
-Les contrats d'entrée et de sortie sont définis dans [`schemas.py`](../schemas.py).
+Les contrats d'entrée et de sortie sont définis dans [`schemas.py`](https://github.com/samuelGabbai/P5_Futurisys/blob/main/schemas.py).
 FastAPI expose ces schémas dans `/docs` et `/openapi.json`.
 
 ## Données entrantes
@@ -76,8 +76,8 @@ sur un jeu de validation indépendant ; Pydantic ne les mesure pas.
 | `POST /score/file` | Vraies réponses requises, encodage Non/Oui, métriques, cible invalide et score hors bornes |
 | `GET /employees/{employee_id}/score` | Lecture depuis la BDD, salarié absent, ID nul, négatif, non numérique ou trop grand |
 
-Les tests se trouvent dans [`tests/test_api.py`](../tests/test_api.py),
-[`tests/test_api_validation.py`](../tests/test_api_validation.py) et les tests
+Les tests se trouvent dans [`tests/test_api.py`](https://github.com/samuelGabbai/P5_Futurisys/blob/main/tests/test_api.py),
+[`tests/test_api_validation.py`](https://github.com/samuelGabbai/P5_Futurisys/blob/main/tests/test_api_validation.py) et les tests
 de traçabilité existants. Ils utilisent un modèle simulé pour vérifier les réponses
 attendues de chaque route sans dépendre d'un nouvel entraînement.
 

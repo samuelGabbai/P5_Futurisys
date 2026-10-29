@@ -25,7 +25,7 @@ Ne pas ajouter le token au code, à une commande Git ou au fichier YAML.
 
 ## Export et traçabilité
 
-Le script [`scripts/publish_huggingface.py`](../scripts/publish_huggingface.py) ne copie
+Le script [`scripts/publish_huggingface.py`](https://github.com/samuelGabbai/P5_Futurisys/blob/main/scripts/publish_huggingface.py) ne copie
 que quatre clés de l'artefact : `model`, `threshold`, `feature_names`, `positive_class`.
 Le dictionnaire `records_by_employee_id` et toutes les autres clés sont exclus.
 Le modèle original reste intact et continue à servir à l'import PostgreSQL local.

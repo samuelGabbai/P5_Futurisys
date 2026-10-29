@@ -1,0 +1,731 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "HRNova Turnover API",
+    "description": "Prédit le risque de départ à partir des variables préparées du modèle HRNova.",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/predict/file": {
+      "post": {
+        "tags": [
+          "Fichiers CSV"
+        ],
+        "summary": "Prédire les classes natives d'un fichier CSV",
+        "description": "Prédictions natives du modèle, dans l'ordre des lignes du CSV.",
+        "operationId": "predict_file_predict_file_post",
+        "parameters": [
+          {
+            "name": "separator",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^[,;]$",
+              "default": ",",
+              "title": "Separator"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_predict_file_predict_file_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FilePredictionResponse"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-ID": {
+                "description": "Identifiant de l'échange dans api_logs.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erreur du modèle ou sortie ne respectant pas le contrat."
+          },
+          "503": {
+            "description": "PostgreSQL, artefact, version enregistrée ou persistance indisponible."
+          },
+          "422": {
+            "description": "Entrée non conforme : type, valeurs, colonnes, cible ou identifiant."
+          },
+          "413": {
+            "description": "Le contenu du fichier dépasse 10 Mio."
+          }
+        }
+      }
+    },
+    "/predict-proba/file": {
+      "post": {
+        "tags": [
+          "Fichiers CSV"
+        ],
+        "summary": "Calculer les probabilités par classe d'un CSV",
+        "description": "Probabilités par classe ; classes donne l'ordre des colonnes de probabilités.",
+        "operationId": "predict_proba_file_predict_proba_file_post",
+        "parameters": [
+          {
+            "name": "separator",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^[,;]$",
+              "default": ",",
+              "title": "Separator"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_predict_proba_file_predict_proba_file_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileProbabilityResponse"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-ID": {
+                "description": "Identifiant de l'échange dans api_logs.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erreur du modèle ou sortie ne respectant pas le contrat."
+          },
+          "503": {
+            "description": "PostgreSQL, artefact, version enregistrée ou persistance indisponible."
+          },
+          "422": {
+            "description": "Entrée non conforme : type, valeurs, colonnes, cible ou identifiant."
+          },
+          "413": {
+            "description": "Le contenu du fichier dépasse 10 Mio."
+          }
+        }
+      }
+    },
+    "/score/file": {
+      "post": {
+        "tags": [
+          "Fichiers CSV"
+        ],
+        "summary": "Évaluer un CSV avec ses vraies réponses",
+        "description": "Accuracy native et métriques au seuil optimisé, avec les vraies réponses.",
+        "operationId": "score_file_score_file_post",
+        "parameters": [
+          {
+            "name": "target_column",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 255,
+              "pattern": "\\S",
+              "default": "a_quitte_l_entreprise",
+              "title": "Target Column"
+            }
+          },
+          {
+            "name": "separator",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^[,;]$",
+              "default": ",",
+              "title": "Separator"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_score_file_score_file_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileScoreResponse"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-ID": {
+                "description": "Identifiant de l'échange dans api_logs.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erreur du modèle ou sortie ne respectant pas le contrat."
+          },
+          "503": {
+            "description": "PostgreSQL, artefact, version enregistrée ou persistance indisponible."
+          },
+          "422": {
+            "description": "Entrée non conforme : type, valeurs, colonnes, cible ou identifiant."
+          },
+          "413": {
+            "description": "Le contenu du fichier dépasse 10 Mio."
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "tags": [
+          "Système"
+        ],
+        "summary": "Vérifier la disponibilité locale",
+        "description": "Vérifie le chargement de l'artefact ; le middleware vérifie l'accès au journal BDD.\n\nNe remplace pas une vérification complète de l'import des salariés et des versions.",
+        "operationId": "health_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "headers": {
+              "X-Request-ID": {
+                "description": "Identifiant de l'échange dans api_logs.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erreur du modèle ou sortie ne respectant pas le contrat."
+          },
+          "503": {
+            "description": "PostgreSQL, artefact, version enregistrée ou persistance indisponible."
+          }
+        }
+      }
+    },
+    "/features": {
+      "get": {
+        "tags": [
+          "Système"
+        ],
+        "summary": "Lister les variables requises par le modèle",
+        "description": "Les noms sont exacts, accents et espaces compris. L'API attend des variables déjà préparées.",
+        "operationId": "features_features_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "headers": {
+              "X-Request-ID": {
+                "description": "Identifiant de l'échange dans api_logs.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeaturesResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erreur du modèle ou sortie ne respectant pas le contrat."
+          },
+          "503": {
+            "description": "PostgreSQL, artefact, version enregistrée ou persistance indisponible."
+          }
+        }
+      }
+    },
+    "/predict": {
+      "post": {
+        "tags": [
+          "Prédictions"
+        ],
+        "summary": "Prédire en JSON au seuil optimisé",
+        "description": "Retourne la probabilité de départ, le seuil et la décision, après persistance BDD.\n\nContrairement à /predict/file, cette route applique le seuil optimisé de l'artefact.",
+        "operationId": "predict_predict_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PredictionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "headers": {
+              "X-Request-ID": {
+                "description": "Identifiant de l'échange dans api_logs.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PredictionResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erreur du modèle ou sortie ne respectant pas le contrat."
+          },
+          "503": {
+            "description": "PostgreSQL, artefact, version enregistrée ou persistance indisponible."
+          },
+          "422": {
+            "description": "Entrée non conforme : type, valeurs, colonnes, cible ou identifiant."
+          }
+        }
+      }
+    },
+    "/employees/{employee_id}/score": {
+      "get": {
+        "tags": [
+          "Salariés"
+        ],
+        "summary": "Scorer un salarié présent dans PostgreSQL",
+        "description": "Charge les variables préparées en BDD pour l'identifiant et la version exacte du modèle.",
+        "operationId": "score_employee_employees__employee_id__score_get",
+        "parameters": [
+          {
+            "name": "employee_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "maximum": 2147483647,
+              "minimum": 1,
+              "title": "Employee Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmployeeScoreResponse"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-ID": {
+                "description": "Identifiant de l'échange dans api_logs.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erreur du modèle ou sortie ne respectant pas le contrat."
+          },
+          "503": {
+            "description": "PostgreSQL, artefact, version enregistrée ou persistance indisponible."
+          },
+          "422": {
+            "description": "Entrée non conforme : type, valeurs, colonnes, cible ou identifiant."
+          },
+          "404": {
+            "description": "Salarié ou ressource introuvable."
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Body_predict_file_predict_file_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_predict_file_predict_file_post"
+      },
+      "Body_predict_proba_file_predict_proba_file_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_predict_proba_file_predict_proba_file_post"
+      },
+      "Body_score_file_score_file_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_score_file_score_file_post"
+      },
+      "EmployeeScoreResponse": {
+        "properties": {
+          "probability": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Probability"
+          },
+          "threshold": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Threshold"
+          },
+          "prediction": {
+            "type": "integer",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Prediction"
+          },
+          "decision": {
+            "type": "string",
+            "enum": [
+              "Risque de départ élevé",
+              "Risque de départ faible"
+            ],
+            "title": "Decision"
+          },
+          "employee_id": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Employee Id"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "probability",
+          "threshold",
+          "prediction",
+          "decision",
+          "employee_id"
+        ],
+        "title": "EmployeeScoreResponse"
+      },
+      "FeaturesResponse": {
+        "properties": {
+          "features": {
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Features"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "features"
+        ],
+        "title": "FeaturesResponse"
+      },
+      "FilePredictionResponse": {
+        "properties": {
+          "row_count": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Row Count"
+          },
+          "predictions": {
+            "items": {
+              "type": "integer",
+              "maximum": 1.0,
+              "minimum": 0.0
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Predictions"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "row_count",
+          "predictions"
+        ],
+        "title": "FilePredictionResponse"
+      },
+      "FileProbabilityResponse": {
+        "properties": {
+          "row_count": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Row Count"
+          },
+          "classes": {
+            "items": {
+              "type": "integer",
+              "maximum": 1.0,
+              "minimum": 0.0
+            },
+            "type": "array",
+            "maxItems": 2,
+            "minItems": 2,
+            "title": "Classes"
+          },
+          "probabilities": {
+            "items": {
+              "items": {
+                "type": "number",
+                "maximum": 1.0,
+                "minimum": 0.0
+              },
+              "type": "array"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Probabilities"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "row_count",
+          "classes",
+          "probabilities"
+        ],
+        "title": "FileProbabilityResponse"
+      },
+      "FileScoreResponse": {
+        "properties": {
+          "row_count": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Row Count"
+          },
+          "score": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Score"
+          },
+          "metric": {
+            "type": "string",
+            "const": "accuracy",
+            "title": "Metric",
+            "default": "accuracy"
+          },
+          "threshold": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Threshold"
+          },
+          "threshold_accuracy": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Threshold Accuracy"
+          },
+          "threshold_precision": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Threshold Precision"
+          },
+          "threshold_recall": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Threshold Recall"
+          },
+          "threshold_f1": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Threshold F1"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "row_count",
+          "score",
+          "threshold",
+          "threshold_accuracy",
+          "threshold_precision",
+          "threshold_recall",
+          "threshold_f1"
+        ],
+        "title": "FileScoreResponse"
+      },
+      "HealthResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "const": "ok",
+            "title": "Status"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "title": "HealthResponse"
+      },
+      "PredictionRequest": {
+        "properties": {
+          "features": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "minProperties": 1,
+            "title": "Features"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "features"
+        ],
+        "title": "PredictionRequest"
+      },
+      "PredictionResponse": {
+        "properties": {
+          "probability": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Probability"
+          },
+          "threshold": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Threshold"
+          },
+          "prediction": {
+            "type": "integer",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Prediction"
+          },
+          "decision": {
+            "type": "string",
+            "enum": [
+              "Risque de départ élevé",
+              "Risque de départ faible"
+            ],
+            "title": "Decision"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "probability",
+          "threshold",
+          "prediction",
+          "decision"
+        ],
+        "title": "PredictionResponse"
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Système",
+      "description": "Disponibilité et contrat des variables du modèle chargé."
+    },
+    {
+      "name": "Prédictions",
+      "description": "Inférence JSON au seuil optimisé, avec traçabilité PostgreSQL."
+    },
+    {
+      "name": "Fichiers CSV",
+      "description": "Upload UTF-8, variables préparées et résultats ordonnés par ligne."
+    },
+    {
+      "name": "Salariés",
+      "description": "Lecture des variables d'un salarié dans PostgreSQL et prédiction tracée."
+    }
+  ]
+}

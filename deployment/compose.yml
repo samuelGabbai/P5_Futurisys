@@ -1,0 +1,31 @@
+services:
+  api:
+    image: ${HRNOVA_IMAGE:?Définir HRNOVA_IMAGE}
+    pull_policy: never
+    restart: unless-stopped
+    init: true
+    environment:
+      DATABASE_URL: ${DATABASE_URL:?Définir DATABASE_URL pour cet environnement}
+      APP_ENV: ${APP_ENV:?Définir APP_ENV}
+      HRNOVA_MODEL_PATH: /app/artifacts/turnover_model.joblib
+    ports:
+      - "${API_BIND_HOST:-127.0.0.1}:${API_PORT:?Définir API_PORT}:8000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=5).read()"
+      interval: 10s
+      timeout: 6s
+      retries: 6
+      start_period: 15s

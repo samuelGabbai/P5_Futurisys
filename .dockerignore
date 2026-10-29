@@ -1,0 +1,16 @@
+**
+!Dockerfile
+!pyproject.toml
+!uv.lock
+!README.md
+!api.py
+!audit.py
+!database.py
+!inference.py
+!schemas.py
+!artifacts/
+!artifacts/turnover_model.joblib
+!examples/
+!examples/predict.json
+!scripts/
+!scripts/check_deployment.py

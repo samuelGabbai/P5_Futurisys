@@ -47,8 +47,45 @@ app = FastAPI(
     title="HRNova Turnover API",
     description="Prédit le risque de départ à partir des variables préparées du modèle HRNova.",
     version="1.0.0",
+    openapi_tags=[
+        {
+            "name": "Système",
+            "description": "Disponibilité et contrat des variables du modèle chargé.",
+        },
+        {
+            "name": "Prédictions",
+            "description": "Inférence JSON au seuil optimisé, avec traçabilité PostgreSQL.",
+        },
+        {
+            "name": "Fichiers CSV",
+            "description": "Upload UTF-8, variables préparées et résultats ordonnés par ligne.",
+        },
+        {
+            "name": "Salariés",
+            "description": "Lecture des variables d'un salarié dans PostgreSQL et prédiction tracée.",
+        },
+    ],
 )
 logger = logging.getLogger(__name__)
+API_RESPONSES = {
+    200: {
+        "headers": {
+            "X-Request-ID": {
+                "description": "Identifiant de l'échange dans api_logs.",
+                "schema": {"type": "string", "format": "uuid"},
+            }
+        }
+    },
+    404: {"description": "Salarié ou ressource introuvable."},
+    413: {"description": "Le contenu du fichier dépasse 10 Mio."},
+    422: {"description": "Entrée non conforme : type, valeurs, colonnes, cible ou identifiant."},
+    500: {"description": "Erreur du modèle ou sortie ne respectant pas le contrat."},
+    503: {"description": "PostgreSQL, artefact, version enregistrée ou persistance indisponible."},
+}
+SYSTEM_RESPONSES = {code: API_RESPONSES[code] for code in (200, 500, 503)}
+PREDICTION_RESPONSES = {**SYSTEM_RESPONSES, 422: API_RESPONSES[422]}
+FILE_RESPONSES = {**PREDICTION_RESPONSES, 413: API_RESPONSES[413]}
+EMPLOYEE_RESPONSES = {**PREDICTION_RESPONSES, 404: API_RESPONSES[404]}
 
 
 @app.exception_handler(StarletteHTTPException)
@@ -210,7 +247,13 @@ def _file_features(frame: pd.DataFrame, artifact: dict[str, Any]) -> pd.DataFram
     return pd.DataFrame([row.features for row in validated.rows], columns=expected)
 
 
-@app.post("/predict/file", response_model=FilePredictionResponse, tags=["Fichiers CSV"])
+@app.post(
+    "/predict/file",
+    response_model=FilePredictionResponse,
+    tags=["Fichiers CSV"],
+    summary="Prédire les classes natives d'un fichier CSV",
+    responses=FILE_RESPONSES,
+)
 def predict_file(request: Request, file: UploadFile, separator: str = Query(",", pattern="^[,;]$")):
     """Prédictions natives du modèle, dans l'ordre des lignes du CSV."""
     frame = _uploaded_frame(request, file, separator)
@@ -221,7 +264,13 @@ def predict_file(request: Request, file: UploadFile, separator: str = Query(",",
     )
 
 
-@app.post("/predict-proba/file", response_model=FileProbabilityResponse, tags=["Fichiers CSV"])
+@app.post(
+    "/predict-proba/file",
+    response_model=FileProbabilityResponse,
+    tags=["Fichiers CSV"],
+    summary="Calculer les probabilités par classe d'un CSV",
+    responses=FILE_RESPONSES,
+)
 def predict_proba_file(
     request: Request, file: UploadFile, separator: str = Query(",", pattern="^[,;]$")
 ):
@@ -234,7 +283,13 @@ def predict_proba_file(
     )
 
 
-@app.post("/score/file", response_model=FileScoreResponse, tags=["Fichiers CSV"])
+@app.post(
+    "/score/file",
+    response_model=FileScoreResponse,
+    tags=["Fichiers CSV"],
+    summary="Évaluer un CSV avec ses vraies réponses",
+    responses=FILE_RESPONSES,
+)
 def score_file(
     request: Request,
     file: UploadFile,
@@ -301,19 +356,46 @@ def get_model_bundle() -> dict[str, Any]:
         raise HTTPException(status_code=500, detail="Artefact de modèle invalide.") from error
 
 
-@app.get("/health", response_model=HealthResponse)
+@app.get(
+    "/health",
+    response_model=HealthResponse,
+    tags=["Système"],
+    summary="Vérifier la disponibilité locale",
+    responses=SYSTEM_RESPONSES,
+)
 def health() -> dict[str, str]:
+    """Vérifie le chargement de l'artefact ; le middleware vérifie l'accès au journal BDD.
+
+    Ne remplace pas une vérification complète de l'import des salariés et des versions.
+    """
     get_model_bundle()
     return {"status": "ok"}
 
 
-@app.get("/features", response_model=FeaturesResponse)
+@app.get(
+    "/features",
+    response_model=FeaturesResponse,
+    tags=["Système"],
+    summary="Lister les variables requises par le modèle",
+    responses=SYSTEM_RESPONSES,
+)
 def features() -> dict[str, list[str]]:
+    """Les noms sont exacts, accents et espaces compris. L'API attend des variables déjà préparées."""
     return {"features": get_model_bundle()["feature_names"]}
 
 
-@app.post("/predict", response_model=PredictionResponse)
+@app.post(
+    "/predict",
+    response_model=PredictionResponse,
+    tags=["Prédictions"],
+    summary="Prédire en JSON au seuil optimisé",
+    responses=PREDICTION_RESPONSES,
+)
 def predict(request: Request, payload: PredictionRequest) -> PredictionResponse:
+    """Retourne la probabilité de départ, le seuil et la décision, après persistance BDD.
+
+    Contrairement à /predict/file, cette route applique le seuil optimisé de l'artefact.
+    """
     artifact = get_model_bundle()
     return _score_features(payload.features, artifact, request.state.exchange_id)
 
@@ -327,10 +409,17 @@ def _score_features(
     )
 
 
-@app.get("/employees/{employee_id}/score", response_model=EmployeeScoreResponse)
+@app.get(
+    "/employees/{employee_id}/score",
+    response_model=EmployeeScoreResponse,
+    tags=["Salariés"],
+    summary="Scorer un salarié présent dans PostgreSQL",
+    responses=EMPLOYEE_RESPONSES,
+)
 def score_employee(
     employee_id: Annotated[int, PathParameter(ge=1, le=2147483647)], request: Request
 ) -> EmployeeScoreResponse:
+    """Charge les variables préparées en BDD pour l'identifiant et la version exacte du modèle."""
     artifact = get_model_bundle()
     employee_values = inference.employee_features(employee_id, artifact)
     frame = _file_features(pd.DataFrame([employee_values]), artifact)
