@@ -13,9 +13,11 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 ENVIRONMENTS = {"development": "8000", "staging": "8002", "production": "8003"}
-SMOKE = """import json, urllib.request
+SMOKE = """import base64, json, os, urllib.request
+credentials = (os.environ['HRNOVA_SMOKE_USERNAME'] + ':' + os.environ['HRNOVA_SMOKE_PASSWORD']).encode()
+authorization = 'Basic ' + base64.b64encode(credentials).decode()
 payload = open('/app/examples/predict.json', 'rb').read()
-request = urllib.request.Request('http://127.0.0.1:8000/predict', data=payload, headers={'Content-Type': 'application/json'})
+request = urllib.request.Request('http://127.0.0.1:8000/predict', data=payload, headers={'Content-Type': 'application/json', 'Authorization': authorization})
 with urllib.request.urlopen(request, timeout=60) as response:
     result = json.load(response)
     assert response.headers.get('X-Request-ID'), 'Trace absente'
@@ -33,6 +35,9 @@ def configuration(environment, image, source=None):
     url = env.get("DATABASE_URL", "")
     if not url.startswith("postgresql+psycopg://") or "CHANGE_ME" in url:
         raise ValueError("Définir une DATABASE_URL PostgreSQL pour la cible.")
+    for secret in ("HRNOVA_AUTH_USERS", "HRNOVA_SMOKE_USERNAME", "HRNOVA_SMOKE_PASSWORD"):
+        if not env.get(secret):
+            raise ValueError(f"Définir {secret} pour la cible.")
     port = env.get("API_PORT") or ENVIRONMENTS[environment]
     if not port.isdecimal() or not 1 <= int(port) <= 65535:
         raise ValueError("API_PORT doit être un port valide.")
@@ -90,7 +95,22 @@ def deploy(environment, image, source=None):
         print(f"[{environment}] Démarrage de {image} et contrôle de santé.", flush=True)
         run(compose + ["up", "--detach", "--no-build", "--wait", "--wait-timeout", "120"], env)
         print(f"[{environment}] Test d’une prédiction tracée en PostgreSQL.", flush=True)
-        run(compose + ["exec", "--no-TTY", "api", "python", "-c", SMOKE], env)
+        run(
+            compose
+            + [
+                "exec",
+                "--no-TTY",
+                "--env",
+                "HRNOVA_SMOKE_USERNAME",
+                "--env",
+                "HRNOVA_SMOKE_PASSWORD",
+                "api",
+                "python",
+                "-c",
+                SMOKE,
+            ],
+            env,
+        )
     except RuntimeError:
         if previous:
             print(f"[{environment}] Échec : restauration de l’image précédente.", flush=True)

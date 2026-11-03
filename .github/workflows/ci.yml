@@ -52,7 +52,7 @@ jobs:
         run: uv sync --locked --extra api --extra dev --extra docs
 
       - name: Exécuter les tests et mesurer la couverture
-        run: uv run --no-sync pytest --cov-report=xml --junitxml=reports/junit.xml
+        run: uv run --no-sync pytest --cov-fail-under=100 --cov-report=xml --junitxml=reports/junit.xml
 
       - name: Conserver les rapports de tests
         if: ${{ always() }}
@@ -143,7 +143,7 @@ jobs:
           cache-dependency-glob: uv.lock
 
       - name: Installer les dépendances de publication verrouillées
-        run: uv sync --locked --extra publish
+        run: uv sync --locked --extra publish --extra api
 
       - name: Télécharger uniquement l'export validé
         uses: actions/download-artifact@v4
@@ -153,6 +153,9 @@ jobs:
 
       - name: Publier le modèle et ses métadonnées
         env:
+          HRNOVA_AUTH_USERS: ${{ secrets.HRNOVA_AUTH_USERS }}
+          HRNOVA_DELIVERY_USERNAME: ${{ secrets.HRNOVA_DELIVERY_USERNAME }}
+          HRNOVA_DELIVERY_PASSWORD: ${{ secrets.HRNOVA_DELIVERY_PASSWORD }}
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
           HF_REPO_ID: ${{ vars.HF_REPO_ID || 'SamGabb/hrnova' }}
         run: uv run --no-sync python scripts/publish_huggingface.py
@@ -259,6 +262,9 @@ jobs:
       - name: Déployer, vérifier et restaurer en cas d'échec
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          HRNOVA_AUTH_USERS: ${{ secrets.HRNOVA_AUTH_USERS }}
+          HRNOVA_SMOKE_USERNAME: ${{ secrets.HRNOVA_SMOKE_USERNAME }}
+          HRNOVA_SMOKE_PASSWORD: ${{ secrets.HRNOVA_SMOKE_PASSWORD }}
           APP_ENV: ${{ github.ref == 'refs/heads/main' && 'production' || github.ref == 'refs/heads/develop' && 'staging' || 'development' }}
           API_PORT: ${{ vars.API_PORT }}
           API_BIND_HOST: ${{ vars.API_BIND_HOST || '127.0.0.1' }}

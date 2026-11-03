@@ -16,8 +16,10 @@ documentation. Il est généré par `python scripts/export_openapi.py` sans conn
 et peut être importé dans un client compatible OpenAPI. La version servie par l'API
 lancée reste la référence pour le processus en cours.
 
-La version déclarée de l'API est `1.0.0`. L'API locale n'a pas d'authentification HTTP
-et n'active pas de CORS spécifique. Elle est lancée par défaut sur l'interface locale.
+La version déclarée de l'API est `1.0.0`. Les routes métier nécessitent une
+[authentification HTTP Basic avec un rôle autorisé](authentication.md). Ajouter
+`-u NOM` aux exemples curl et utiliser **Authorize** dans Swagger. L’API
+n’active pas de CORS spécifique et écoute par défaut sur l’interface locale.
 Chaque réponse inclut `X-Request-ID` pour retrouver l'échange dans la BDD.
 Le journal d'accès étant stocké en PostgreSQL, les pages de documentation nécessitent
 elles aussi une connexion BDD fonctionnelle.
@@ -26,6 +28,8 @@ elles aussi une connexion BDD fonctionnelle.
 
 | Méthode et chemin | Entrée | Résultat |
 | --- | --- | --- |
+| `GET /auth/me` | HTTP Basic | Identité, rôle et permissions |
+| `GET /model/download` | Compte livreur/admin | Archive du modèle exporté, sans lignes salariées |
 | `GET /health` | Aucune | Disponibilité BDD/journal et chargement du modèle |
 | `GET /features` | Aucune | Noms des variables attendues |
 | `POST /predict` | JSON `features` | Probabilité de départ et décision au seuil optimisé |

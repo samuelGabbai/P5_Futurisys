@@ -27,8 +27,9 @@ Le serveur PostgreSQL doit être redémarré après un redémarrage du Mac si au
 système n'a été configuré ; `local_postgres.py start` s'en charge.
 
 Le projet fournit un Dockerfile et une configuration Compose pour exécuter l'API
-sur des machines préparées. Le reverse proxy, le TLS et l'authentification HTTP
-restent à configurer pour une exposition publique. La BDD doit être accessible
+sur des machines préparées. Configurer les [comptes et rôles HTTP Basic](authentication.md)
+et les secrets du contrôle de déploiement. Le reverse proxy et le TLS restent
+à configurer pour une exposition publique. La BDD doit être accessible
 depuis le conteneur. `127.0.0.1` depuis un conteneur désigne ce conteneur, pas le
 PostgreSQL du Mac ; les modèles de configuration utilisent `host.docker.internal`.
 

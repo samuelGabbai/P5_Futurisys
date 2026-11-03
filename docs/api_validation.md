@@ -85,12 +85,37 @@ attendues de chaque route sans dépendre d'un nouvel entraînement.
 uv sync --locked --extra api --extra dev
 uv run --no-sync pytest tests/test_api.py tests/test_api_validation.py
 # Suite complète utilisée en CI :
-uv run --no-sync pytest --cov-report=xml --junitxml=reports/junit.xml
+uv run --no-sync pytest --cov-fail-under=100 --cov-report=xml --junitxml=reports/junit.xml
 ```
 
 Le workflow GitHub Actions exécute ces tests à chaque push et pull request, avec
 PostgreSQL et un schéma isolé par test. Les entrées refusées sont rejetées avant
 tout appel modèle ; les tests vérifient également l'absence de sortie enregistrée.
+
+### Couverture et cas d'échec
+
+La CI exige **100 % des lignes exécutables** des six modules mesurés : `api`,
+`audit`, `database`, `inference`, `schemas` et `create_db`. Ce seuil ne mesure pas
+la précision du modèle, toutes les combinaisons de branches ni la couverture de
+tous les scripts du dépôt. Les exclusions de couverture restent celles déjà
+déclarées dans `pyproject.toml`.
+
+Les tests complémentaires couvrent les artefacts absents ou incomplets, le cache
+et le hash du modèle, les métadonnées incompatibles, les classes invalides,
+l'échec de finalisation des logs, les cibles et les réponses incohérentes.
+Ils vérifient aussi le rejet des sources non concordantes et le rollback d'un
+import après une erreur d'écriture. Le point d'entrée CLI est testé avec des
+fichiers temporaires et une connexion d'administration simulée.
+
+Avec `TEST_DATABASE_URL`, deux tests vérifient réellement PostgreSQL : création
+idempotente d'une base temporaire, puis migration réexécutable et lecture de
+`api_logs` dans un schéma isolé. Le rôle de cette **base de test dédiée** doit
+avoir `CREATEDB` pour le premier test et le droit de créer des schémas. Les bases
+et schémas temporaires sont supprimés après les tests. Ne pas utiliser la base
+applicative comme `TEST_DATABASE_URL`.
+
+Sans `TEST_DATABASE_URL`, les tests de données utilisent SQLite en mémoire et
+les deux tests spécifiques à PostgreSQL sont explicitement ignorés.
 
 Références : [validateurs Pydantic et contexte](https://docs.pydantic.dev/latest/concepts/validators/)
 et [types contraints Pydantic](https://docs.pydantic.dev/latest/api/types/).

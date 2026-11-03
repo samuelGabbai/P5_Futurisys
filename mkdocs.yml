@@ -32,6 +32,7 @@ validation:
     not_found: warn
     anchors: warn
 nav:
+  - Authentification et rôles: authentication.md
   - Accueil: index.md
   - Installation et configuration: installation.md
   - API:

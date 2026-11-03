@@ -93,7 +93,7 @@ Issues = "https://github.com/samuelGabbai/P5_Futurisys/issues"
 
 [tool.setuptools]
 packages = []
-py-modules = ["api", "audit", "database", "inference", "create_db", "schemas"]
+py-modules = ["api", "auth", "model_release", "audit", "database", "inference", "create_db", "schemas"]
 
 [tool.black]
 line-length = 100

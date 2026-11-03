@@ -45,6 +45,7 @@ git clone https://github.com/samuelGabbai/P5_Futurisys.git
 cd P5_Futurisys
 uv sync --locked --python 3.13 --extra api --extra dev
 uv run --no-sync python scripts/local_postgres.py start
+uv run --no-sync python scripts/manage_users.py admin --role admin
 uv run --no-sync uvicorn api:app --host 127.0.0.1 --port 8000 --reload
 ```
 
@@ -144,7 +145,10 @@ logs du processus, et un arrêt brutal peut laisser une requête `pending`.
 `DATABASE_URL` configure PostgreSQL et `HRNOVA_MODEL_PATH` le fichier de modèle.
 La liste complète des variables et des droits se trouve dans
 [la configuration](docs/installation.md#variables-de-configuration).
-L'API est conçue pour l'usage local et n'a pas d'authentification HTTP.
+L’API protège ses routes par HTTP Basic avec les rôles `utilisateur` (API), `livreur` (téléchargement et publication du modèle)
+et `admin` (les deux).
+Créer un compte avant utilisation : `uv run --no-sync python scripts/manage_users.py admin --role admin`.
+Voir [les droits d’accès](docs/authentication.md) pour la connexion et le déploiement.
 
 ## Tests, documentation et déploiement
 

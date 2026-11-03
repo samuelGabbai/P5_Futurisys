@@ -7,7 +7,7 @@ WORKDIR /app
 ENV UV_LINK_MODE=copy UV_PYTHON_DOWNLOADS=never PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
 COPY pyproject.toml uv.lock README.md ./
 RUN uv sync --locked --extra api --no-dev --no-install-project
-COPY api.py audit.py database.py inference.py schemas.py ./
+COPY api.py auth.py model_release.py audit.py database.py inference.py schemas.py ./
 COPY artifacts/turnover_model.joblib ./artifacts/turnover_model.joblib
 COPY examples/predict.json ./examples/predict.json
 COPY scripts/check_deployment.py ./scripts/check_deployment.py

@@ -54,6 +54,9 @@ existant, les droits des deux rôles et la recréation avec sauvegarde.
 | `DATABASE_URL` | Connexion utilisée par l'API et par défaut par l'import | `postgresql+psycopg://UTILISATEUR:MOT_DE_PASSE@127.0.0.1:5433/hrnova` |
 | `DATABASE_ADMIN_URL` | Connexion de création de base, pour `create_db.py --create-database` | URL vers `postgres` avec droit `CREATEDB` ; facultative si le rôle de `DATABASE_URL` possède ce droit |
 | `HRNOVA_MODEL_PATH` | Fichier du modèle local | `artifacts/turnover_model.joblib` ; chemin absolu recommandé hors racine du dépôt |
+| `HRNOVA_DELIVERY_USERNAME` / `HRNOVA_DELIVERY_PASSWORD` | Identifiants du compte livreur pour la publication | Secrets du processus ou de l’environnement GitHub `production` |
+| `HRNOVA_MODEL_REVISION` | Commit source des archives téléchargées | `local` par défaut ; les hashes restent calculés sur le modèle |
+| `HRNOVA_AUTH_USERS` | Comptes HTTP Basic, hashes et rôles | Générer avec `scripts/manage_users.py` ; voir [authentification](authentication.md) |
 | `TEST_DATABASE_URL` | Connexion des tests PostgreSQL | Base dédiée et rôle autorisé à créer/supprimer des schémas de test |
 | `HF_TOKEN` | Secret du job de publication | Token à droit d'écriture, conservé dans les secrets GitHub |
 | `HF_REPO_ID` | Dépôt Model cible | Facultatif, `SamGabb/hrnova` par défaut |

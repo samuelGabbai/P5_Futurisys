@@ -8,14 +8,16 @@ from functools import lru_cache
 from io import BytesIO, StringIO
 from pathlib import Path
 from time import perf_counter
+from tempfile import TemporaryDirectory
 from typing import Annotated, Any
 from uuid import uuid4
+from zipfile import ZIP_DEFLATED, ZipFile
 
 import joblib
 import pandas as pd
-from fastapi import FastAPI, HTTPException, Query, Request, UploadFile
+from fastapi import Depends, FastAPI, HTTPException, Query, Request, UploadFile
 from fastapi import Path as PathParameter
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.exception_handlers import http_exception_handler
 from pydantic import ValidationError
@@ -24,7 +26,9 @@ from starlette.concurrency import run_in_threadpool
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 import audit
+from auth import Principal, current_user, require_permission
 import inference
+from model_release import RELEASE_FILES, prepare_release
 from schemas import (
     BatchPredictionRequest,
     EmployeeScoreResponse,
@@ -83,7 +87,11 @@ API_RESPONSES = {
     503: {"description": "PostgreSQL, artefact, version enregistrée ou persistance indisponible."},
 }
 SYSTEM_RESPONSES = {code: API_RESPONSES[code] for code in (200, 500, 503)}
-PREDICTION_RESPONSES = {**SYSTEM_RESPONSES, 422: API_RESPONSES[422]}
+AUTH_RESPONSES = {
+    401: {"description": "Authentification requise ou invalide."},
+    403: {"description": "Droits insuffisants."},
+}
+PREDICTION_RESPONSES = {**SYSTEM_RESPONSES, **AUTH_RESPONSES, 422: API_RESPONSES[422]}
 FILE_RESPONSES = {**PREDICTION_RESPONSES, 413: API_RESPONSES[413]}
 EMPLOYEE_RESPONSES = {**PREDICTION_RESPONSES, 404: API_RESPONSES[404]}
 
@@ -249,6 +257,7 @@ def _file_features(frame: pd.DataFrame, artifact: dict[str, Any]) -> pd.DataFram
 
 @app.post(
     "/predict/file",
+    dependencies=[Depends(require_permission("predictions:write"))],
     response_model=FilePredictionResponse,
     tags=["Fichiers CSV"],
     summary="Prédire les classes natives d'un fichier CSV",
@@ -266,6 +275,7 @@ def predict_file(request: Request, file: UploadFile, separator: str = Query(",",
 
 @app.post(
     "/predict-proba/file",
+    dependencies=[Depends(require_permission("predictions:write"))],
     response_model=FileProbabilityResponse,
     tags=["Fichiers CSV"],
     summary="Calculer les probabilités par classe d'un CSV",
@@ -285,6 +295,7 @@ def predict_proba_file(
 
 @app.post(
     "/score/file",
+    dependencies=[Depends(require_permission("predictions:write"))],
     response_model=FileScoreResponse,
     tags=["Fichiers CSV"],
     summary="Évaluer un CSV avec ses vraies réponses",
@@ -374,10 +385,11 @@ def health() -> dict[str, str]:
 
 @app.get(
     "/features",
+    dependencies=[Depends(require_permission("features:read"))],
     response_model=FeaturesResponse,
     tags=["Système"],
     summary="Lister les variables requises par le modèle",
-    responses=SYSTEM_RESPONSES,
+    responses={**SYSTEM_RESPONSES, **AUTH_RESPONSES},
 )
 def features() -> dict[str, list[str]]:
     """Les noms sont exacts, accents et espaces compris. L'API attend des variables déjà préparées."""
@@ -386,6 +398,7 @@ def features() -> dict[str, list[str]]:
 
 @app.post(
     "/predict",
+    dependencies=[Depends(require_permission("predictions:write"))],
     response_model=PredictionResponse,
     tags=["Prédictions"],
     summary="Prédire en JSON au seuil optimisé",
@@ -411,6 +424,7 @@ def _score_features(
 
 @app.get(
     "/employees/{employee_id}/score",
+    dependencies=[Depends(require_permission("employees:read"))],
     response_model=EmployeeScoreResponse,
     tags=["Salariés"],
     summary="Scorer un salarié présent dans PostgreSQL",
@@ -427,3 +441,50 @@ def score_employee(
         request.state.exchange_id, "threshold_predict", frame, artifact, employee_id=employee_id
     )
     return EmployeeScoreResponse(**score)
+
+
+@app.get(
+    "/auth/me",
+    response_model=Principal,
+    tags=["Authentification"],
+    responses={**AUTH_RESPONSES, 503: API_RESPONSES[503]},
+)
+def authenticated_identity(user: Annotated[Principal, Depends(current_user)]):
+    """Vérifier la connexion et consulter son rôle et ses permissions."""
+    return user
+
+
+@app.get(
+    "/model/download",
+    dependencies=[Depends(require_permission("model:deliver"))],
+    tags=["Livraison du modèle"],
+    summary="Télécharger le modèle et ses métadonnées sans données salariées",
+    response_class=Response,
+    responses={
+        **AUTH_RESPONSES,
+        200: {"content": {"application/zip": {"schema": {"type": "string", "format": "binary"}}}},
+        503: API_RESPONSES[503],
+    },
+)
+def download_model(request: Request):
+    source = Path(os.environ.get("HRNOVA_MODEL_PATH", str(DEFAULT_MODEL_PATH)))
+    archive = BytesIO()
+    with TemporaryDirectory(prefix="hrnova-release-") as directory:
+        output = Path(directory)
+        metadata = prepare_release(
+            source, output, os.environ.get("HRNOVA_MODEL_REVISION") or "local"
+        )
+        with ZipFile(archive, "w", compression=ZIP_DEFLATED) as zipped:
+            for name in sorted(RELEASE_FILES):
+                zipped.write(output / name, arcname=name)
+    request.state.audit_details.update(
+        operation="model_delivery", model_sha256=metadata["model_sha256"]
+    )
+    return Response(
+        content=archive.getvalue(),
+        media_type="application/zip",
+        headers={
+            "Content-Disposition": 'attachment; filename="hrnova-model.zip"',
+            "Cache-Control": "no-store",
+        },
+    )

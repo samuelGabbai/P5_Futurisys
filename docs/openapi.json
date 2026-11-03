@@ -14,6 +14,11 @@
         "summary": "Prédire les classes natives d'un fichier CSV",
         "description": "Prédictions natives du modèle, dans l'ordre des lignes du CSV.",
         "operationId": "predict_file_predict_file_post",
+        "security": [
+          {
+            "HTTPBasic": []
+          }
+        ],
         "parameters": [
           {
             "name": "separator",
@@ -63,6 +68,12 @@
           "503": {
             "description": "PostgreSQL, artefact, version enregistrée ou persistance indisponible."
           },
+          "401": {
+            "description": "Authentification requise ou invalide."
+          },
+          "403": {
+            "description": "Droits insuffisants."
+          },
           "422": {
             "description": "Entrée non conforme : type, valeurs, colonnes, cible ou identifiant."
           },
@@ -80,6 +91,11 @@
         "summary": "Calculer les probabilités par classe d'un CSV",
         "description": "Probabilités par classe ; classes donne l'ordre des colonnes de probabilités.",
         "operationId": "predict_proba_file_predict_proba_file_post",
+        "security": [
+          {
+            "HTTPBasic": []
+          }
+        ],
         "parameters": [
           {
             "name": "separator",
@@ -129,6 +145,12 @@
           "503": {
             "description": "PostgreSQL, artefact, version enregistrée ou persistance indisponible."
           },
+          "401": {
+            "description": "Authentification requise ou invalide."
+          },
+          "403": {
+            "description": "Droits insuffisants."
+          },
           "422": {
             "description": "Entrée non conforme : type, valeurs, colonnes, cible ou identifiant."
           },
@@ -146,6 +168,11 @@
         "summary": "Évaluer un CSV avec ses vraies réponses",
         "description": "Accuracy native et métriques au seuil optimisé, avec les vraies réponses.",
         "operationId": "score_file_score_file_post",
+        "security": [
+          {
+            "HTTPBasic": []
+          }
+        ],
         "parameters": [
           {
             "name": "target_column",
@@ -207,6 +234,12 @@
           },
           "503": {
             "description": "PostgreSQL, artefact, version enregistrée ou persistance indisponible."
+          },
+          "401": {
+            "description": "Authentification requise ou invalide."
+          },
+          "403": {
+            "description": "Droits insuffisants."
           },
           "422": {
             "description": "Entrée non conforme : type, valeurs, colonnes, cible ou identifiant."
@@ -287,8 +320,19 @@
           },
           "503": {
             "description": "PostgreSQL, artefact, version enregistrée ou persistance indisponible."
+          },
+          "401": {
+            "description": "Authentification requise ou invalide."
+          },
+          "403": {
+            "description": "Droits insuffisants."
           }
-        }
+        },
+        "security": [
+          {
+            "HTTPBasic": []
+          }
+        ]
       }
     },
     "/predict": {
@@ -335,10 +379,21 @@
           "503": {
             "description": "PostgreSQL, artefact, version enregistrée ou persistance indisponible."
           },
+          "401": {
+            "description": "Authentification requise ou invalide."
+          },
+          "403": {
+            "description": "Droits insuffisants."
+          },
           "422": {
             "description": "Entrée non conforme : type, valeurs, colonnes, cible ou identifiant."
           }
-        }
+        },
+        "security": [
+          {
+            "HTTPBasic": []
+          }
+        ]
       }
     },
     "/employees/{employee_id}/score": {
@@ -349,6 +404,11 @@
         "summary": "Scorer un salarié présent dans PostgreSQL",
         "description": "Charge les variables préparées en BDD pour l'identifiant et la version exacte du modèle.",
         "operationId": "score_employee_employees__employee_id__score_get",
+        "security": [
+          {
+            "HTTPBasic": []
+          }
+        ],
         "parameters": [
           {
             "name": "employee_id",
@@ -388,6 +448,12 @@
           "503": {
             "description": "PostgreSQL, artefact, version enregistrée ou persistance indisponible."
           },
+          "401": {
+            "description": "Authentification requise ou invalide."
+          },
+          "403": {
+            "description": "Droits insuffisants."
+          },
           "422": {
             "description": "Entrée non conforme : type, valeurs, colonnes, cible ou identifiant."
           },
@@ -395,6 +461,78 @@
             "description": "Salarié ou ressource introuvable."
           }
         }
+      }
+    },
+    "/auth/me": {
+      "get": {
+        "tags": [
+          "Authentification"
+        ],
+        "summary": "Authenticated Identity",
+        "description": "Vérifier la connexion et consulter son rôle et ses permissions.",
+        "operationId": "authenticated_identity_auth_me_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Principal"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentification requise ou invalide."
+          },
+          "403": {
+            "description": "Droits insuffisants."
+          },
+          "503": {
+            "description": "PostgreSQL, artefact, version enregistrée ou persistance indisponible."
+          }
+        },
+        "security": [
+          {
+            "HTTPBasic": []
+          }
+        ]
+      }
+    },
+    "/model/download": {
+      "get": {
+        "tags": [
+          "Livraison du modèle"
+        ],
+        "summary": "Télécharger le modèle et ses métadonnées sans données salariées",
+        "operationId": "download_model_model_download_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/zip": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentification requise ou invalide."
+          },
+          "403": {
+            "description": "Droits insuffisants."
+          },
+          "503": {
+            "description": "PostgreSQL, artefact, version enregistrée ou persistance indisponible."
+          }
+        },
+        "security": [
+          {
+            "HTTPBasic": []
+          }
+        ]
       }
     }
   },
@@ -707,6 +845,44 @@
           "decision"
         ],
         "title": "PredictionResponse"
+      },
+      "Principal": {
+        "properties": {
+          "username": {
+            "type": "string",
+            "title": "Username"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "utilisateur",
+              "livreur",
+              "lecteur",
+              "analyste",
+              "admin"
+            ],
+            "title": "Role"
+          },
+          "permissions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Permissions"
+          }
+        },
+        "type": "object",
+        "required": [
+          "username",
+          "role"
+        ],
+        "title": "Principal"
+      }
+    },
+    "securitySchemes": {
+      "HTTPBasic": {
+        "type": "http",
+        "scheme": "basic"
       }
     }
   },

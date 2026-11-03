@@ -16,8 +16,12 @@ de l'environnement ont réussi. Les pull requests et les autres branches ne publ
    - onglet **Variables** (facultatif) : ajouter `HF_REPO_ID` pour remplacer `SamGabb/hrnova` ;
    - onglet **Secrets** : ajouter le secret `HF_TOKEN` avec le token.
    Le secret peut aussi être défini dans l'environnement GitHub `production`.
-4. Si `production` impose une approbation, approuver les jobs concernés dans GitHub Actions.
-5. Pousser sur `main`. Le job **Publier le modèle sur Hugging Face** transmet l'export
+4. Créer un compte `livreur` avec `scripts/manage_users.py`. Ajouter les secrets
+   `HRNOVA_AUTH_USERS` (JSON des comptes), `HRNOVA_DELIVERY_USERNAME` et
+   `HRNOVA_DELIVERY_PASSWORD` dans `production`. Le script exige le droit de
+   livraison en plus du token Hugging Face ; un compte `utilisateur` est refusé.
+5. Si `production` impose une approbation, approuver les jobs concernés dans GitHub Actions.
+6. Pousser sur `main`. Le job **Publier le modèle sur Hugging Face** transmet l'export
    après réussite des vérifications. Un token manquant provoque un échec explicite
    du job de publication, sans envoi de fichiers.
 
@@ -72,10 +76,12 @@ uv run --no-sync python scripts/publish_huggingface.py \
 
 Le dossier de sortie doit être vide. Cette commande ne contacte pas Hugging Face.
 Pour publier manuellement l'export après configuration de `HF_TOKEN` dans
-l'environnement du terminal (`HF_REPO_ID` reste facultatif, avec la même valeur par défaut) :
+l’environnement du terminal et des identifiants de livraison
+`HRNOVA_DELIVERY_USERNAME` / `HRNOVA_DELIVERY_PASSWORD` (`HRNOVA_AUTH_USERS`
+est lu depuis `.env` ou l’environnement ; `HF_REPO_ID` reste facultatif) :
 
 ```bash
-uv sync --locked --extra publish
+uv sync --locked --extra publish --extra api
 uv run --no-sync python scripts/publish_huggingface.py \
   --git-sha COMMIT_SOURCE --output-dir hf-release
 ```

@@ -1,4 +1,5 @@
 import json
+import os
 from pathlib import Path
 from unittest.mock import Mock
 
@@ -11,7 +12,22 @@ from scripts.publish_huggingface import PUBLIC_KEYS, prepare_release, publish_re
 
 
 @pytest.fixture
-def release(tmp_path):
+def release(tmp_path, monkeypatch):
+    from auth import hash_password
+
+    monkeypatch.setenv(
+        "HRNOVA_AUTH_USERS",
+        json.dumps(
+            {
+                "delivery": {
+                    "password_hash": hash_password("delivery-test-password"),
+                    "role": "livreur",
+                }
+            }
+        ),
+    )
+    monkeypatch.setenv("HRNOVA_DELIVERY_USERNAME", "delivery")
+    monkeypatch.setenv("HRNOVA_DELIVERY_PASSWORD", "delivery-test-password")
     model = DummyClassifier(strategy="prior").fit([[1, 2], [3, 4]], [0, 1])
     source = tmp_path / "original.joblib"
     joblib.dump(
@@ -89,3 +105,32 @@ def test_prepare_preserves_source_and_refuses_same_directory(release):
     with pytest.raises(ValueError):
         prepare_release(source, source.parent, "commit-123")
     assert source.read_bytes() == original
+
+
+@pytest.mark.parametrize("role", ["utilisateur", "lecteur", "analyste"])
+def test_api_role_cannot_publish_even_with_huggingface_token(release, monkeypatch, role):
+    _, output, _ = release
+    accounts = json.loads(os.environ["HRNOVA_AUTH_USERS"])
+    accounts["delivery"]["role"] = role
+    monkeypatch.setenv("HRNOVA_AUTH_USERS", json.dumps(accounts))
+    client = Mock()
+    with pytest.raises(PermissionError, match="Droit de livraison"):
+        publish_release(output, "account/hrnova", "valid-token", "commit-123", client=client)
+    client.upload_folder.assert_not_called()
+
+
+@pytest.mark.parametrize("failure", ["wrong-password", "disabled", "missing-config"])
+def test_unauthenticated_delivery_never_contacts_huggingface(release, monkeypatch, failure):
+    _, output, _ = release
+    if failure == "wrong-password":
+        monkeypatch.setenv("HRNOVA_DELIVERY_PASSWORD", "wrong")
+    elif failure == "missing-config":
+        monkeypatch.delenv("HRNOVA_AUTH_USERS")
+    else:
+        accounts = json.loads(os.environ["HRNOVA_AUTH_USERS"])
+        accounts["delivery"]["enabled"] = False
+        monkeypatch.setenv("HRNOVA_AUTH_USERS", json.dumps(accounts))
+    client = Mock()
+    with pytest.raises(PermissionError, match="Authentification"):
+        publish_release(output, "account/hrnova", "valid-token", "commit-123", client=client)
+    client.upload_folder.assert_not_called()

@@ -65,3 +65,18 @@ def isolated_database(monkeypatch):
         root_engine.dispose()
     else:
         engine.dispose()
+
+
+@pytest.fixture(autouse=True)
+def authenticated_admin():
+    """Les tests métier isolent les permissions, testées dans test_auth.py."""
+    from api import app
+    from auth import Principal, current_user, PERMISSIONS
+
+    previous = app.dependency_overrides.copy()
+    app.dependency_overrides[current_user] = lambda: Principal(
+        username="test-admin", role="admin", permissions=sorted(PERMISSIONS["admin"])
+    )
+    yield
+    app.dependency_overrides.clear()
+    app.dependency_overrides.update(previous)

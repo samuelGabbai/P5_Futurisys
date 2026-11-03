@@ -4,7 +4,12 @@ import pytest
 
 from scripts import deploy_api
 
-SOURCE = {"DATABASE_URL": "postgresql+psycopg://app:secret@db/hrnova_staging"}
+SOURCE = {
+    "DATABASE_URL": "postgresql+psycopg://app:secret@db/hrnova_staging",
+    "HRNOVA_AUTH_USERS": "configured-in-container",
+    "HRNOVA_SMOKE_USERNAME": "analyst",
+    "HRNOVA_SMOKE_PASSWORD": "test-secret-password",
+}
 
 
 def fake_docker(monkeypatch, failure=None, previous=True, rollback_failure=False):
@@ -115,3 +120,14 @@ def test_preflight_requires_registered_compatible_model(
             check()
     else:
         check()
+
+
+@pytest.mark.parametrize(
+    "secret", ["HRNOVA_AUTH_USERS", "HRNOVA_SMOKE_USERNAME", "HRNOVA_SMOKE_PASSWORD"]
+)
+def test_missing_authentication_secret_prevents_deployment(monkeypatch, secret):
+    calls = fake_docker(monkeypatch)
+    source = {key: value for key, value in SOURCE.items() if key != secret}
+    with pytest.raises(ValueError, match=secret):
+        deploy_api.deploy("staging", "hrnova-api:abc", source)
+    assert calls == []

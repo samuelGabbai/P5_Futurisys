@@ -6,6 +6,7 @@ services:
     init: true
     environment:
       DATABASE_URL: ${DATABASE_URL:?Définir DATABASE_URL pour cet environnement}
+      HRNOVA_AUTH_USERS: ${HRNOVA_AUTH_USERS:?Configurer les comptes et rôles}
       APP_ENV: ${APP_ENV:?Définir APP_ENV}
       HRNOVA_MODEL_PATH: /app/artifacts/turnover_model.joblib
     ports:

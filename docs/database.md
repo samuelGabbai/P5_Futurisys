@@ -240,8 +240,8 @@ Le rôle `hrnova_app` n'est ni superutilisateur, ni créateur de bases ou de rô
 Il peut lire les tables, insérer les échanges/inputs/outputs et finaliser les échanges.
 Il ne peut pas modifier le dataset, mettre à jour les sorties ou supprimer l'historique.
 Le rôle administrateur sert uniquement au provisionnement et à l'import.
-L'API est destinée à un usage local ; une exposition réseau nécessiterait une
-authentification et des autorisations HTTP adaptées aux données RH.
+L’API utilise des [comptes et rôles HTTP Basic](authentication.md), distincts des
+rôles PostgreSQL. Une exposition réseau nécessite un proxy HTTPS.
 
 Les tests couvrent le commit des inputs avant calcul, leur relecture depuis une autre
 session, la concordance de la réponse et de la sortie stockée, les échecs du modèle,
