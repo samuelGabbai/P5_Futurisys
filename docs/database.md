@@ -204,10 +204,10 @@ Pour les messages détaillés, les durées et les erreurs, consulter le
 
 ```bash
 uv run --no-sync uvicorn api:app --reload
-curl -i http://127.0.0.1:8000/employees/1/score
-curl -i -X POST http://127.0.0.1:8000/predict/file -F 'file=@employes_prepares.csv'
-curl -i -X POST http://127.0.0.1:8000/predict-proba/file -F 'file=@employes_prepares.csv'
-curl -i -X POST http://127.0.0.1:8000/score/file -F 'file=@employes_prepares_avec_cible.csv'
+curl -i -u application http://127.0.0.1:8000/employees/1/score
+curl -i -u application -X POST http://127.0.0.1:8000/predict/file -F 'file=@employes_prepares.csv'
+curl -i -u application -X POST http://127.0.0.1:8000/predict-proba/file -F 'file=@employes_prepares.csv'
+curl -i -u application -X POST http://127.0.0.1:8000/score/file -F 'file=@employes_prepares_avec_cible.csv'
 ```
 
 Connexion depuis pgAdmin ou `psql` : hôte `127.0.0.1`, port `5433`, base `hrnova`,
@@ -268,3 +268,13 @@ TEST_DATABASE_URL='postgresql+psycopg://utilisateur:mot_de_passe@127.0.0.1:5433/
 Références : [transactions SQLAlchemy](https://docs.sqlalchemy.org/en/20/orm/session_basics.html),
 [création d'une base PostgreSQL](https://www.postgresql.org/docs/18/sql-createdatabase.html)
 et [privilèges PostgreSQL](https://www.postgresql.org/docs/18/ddl-priv.html).
+
+## Besoins analytiques et vues agrégées
+
+La [spécification des tableaux de bord](analytics.md) définit les utilisateurs,
+KPI, fréquences, règles de qualité et droits d’accès. La migration
+`003_analytics_views.sql` ajoute `analytics_daily_activity` pour l’exploitation
+et `analytics_model_scores` pour les scores agrégés par jour, version et seuil.
+Ces vues excluent les inputs et identifiants salariés ; les groupes métier de moins
+de cinq requêtes sont masqués. Elles sont créées avec le rôle d’administration
+et deviennent lisibles après application des droits du service local.

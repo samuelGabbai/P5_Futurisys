@@ -1,5 +1,6 @@
 """Vérifier les sources complètes et le circuit API/BDD avec le rôle applicatif."""
 
+import argparse
 import json
 import sys
 from pathlib import Path
@@ -13,6 +14,8 @@ from fastapi.testclient import TestClient
 from sqlalchemy import func, select, text
 
 import api
+from auth import authenticate
+from scripts.client_credentials import DEFAULT_CREDENTIALS, client_credentials
 from database import (
     ApiExchange,
     Employee,
@@ -26,7 +29,10 @@ from database import (
 )
 
 
-def main():
+def verify_database(username: str, password: str) -> dict:
+    user = authenticate(username, password)
+    if not {"features:read", "predictions:write", "employees:read"}.issubset(user.permissions):
+        raise ValueError("La vérification exige un compte utilisateur ou admin.")
     tables = [Employee, Survey, Evaluation, PreparedEmployee]
     with session() as db:
         counts = {
@@ -73,28 +79,53 @@ def main():
         if route == "/score/file":
             data[api.TARGET_COLUMN] = truth
         response = client.post(
-            route, files={"file": ("verification.csv", data.to_csv(index=False), "text/csv")}
+            route,
+            auth=(username, password),
+            files={"file": ("verification.csv", data.to_csv(index=False), "text/csv")},
         )
         verify_response(response, route, report)
-    response = client.post("/predict", json={"features": frame.iloc[0].to_dict()})
+    response = client.post(
+        "/predict", auth=(username, password), json={"features": frame.iloc[0].to_dict()}
+    )
     verify_response(response, "/predict", report)
-    response = client.get(f"/employees/{employee_id}/score")
+    response = client.get(f"/employees/{employee_id}/score", auth=(username, password))
     verify_response(response, "/employees/{id}/score", report)
+    client.close()
+    privileges = application_privileges()
+    assert not privileges["update_dataset"]
+    assert not privileges["delete_inputs"]
+    assert not privileges["update_outputs"]
+    assert privileges["insert_outputs"]
+    report["application_role_privileges"] = privileges
+    report["authenticated_role"] = user.role
+    report["verified_at_utc"] = pd.Timestamp.now(tz="UTC").isoformat()
+    return report
+
+
+def application_privileges() -> dict:
     with get_engine().connect() as connection:
-        privileges = connection.execute(text("""
+        return dict(connection.execute(text("""
             SELECT has_table_privilege(current_user, 'employees', 'UPDATE') AS update_dataset,
                    has_table_privilege(current_user, 'model_inputs', 'DELETE') AS delete_inputs,
                    has_table_privilege(current_user, 'model_outputs', 'UPDATE') AS update_outputs,
                    has_table_privilege(current_user, 'model_outputs', 'INSERT') AS insert_outputs
-        """)).mappings().one()
-        assert not privileges["update_dataset"]
-        assert not privileges["delete_inputs"]
-        assert not privileges["update_outputs"]
-        assert privileges["insert_outputs"]
-        report["application_role_privileges"] = dict(privileges)
-    report["verified_at_utc"] = pd.Timestamp.now(tz="UTC").isoformat()
-    destination = ROOT / "docs/database_validation.json"
-    destination.write_text(json.dumps(report, indent=2) + "\n")
+        """)).mappings().one())
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--credentials-file", type=Path, default=DEFAULT_CREDENTIALS)
+    parser.add_argument("--output", type=Path, default=ROOT / "docs/database_validation.json")
+    args = parser.parse_args()
+    try:
+        report = verify_database(*client_credentials(args.credentials_file))
+    except Exception:
+        parser.exit(
+            1,
+            "Vérification échouée : contrôler les comptes, PostgreSQL, les sources et les droits.\n",
+        )
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    args.output.write_text(json.dumps(report, indent=2) + "\n")
     print(json.dumps(report, indent=2))
 
 

@@ -4,7 +4,7 @@ import os
 from uuid import uuid4
 
 import pytest
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, event
 from sqlalchemy.schema import CreateSchema, DropSchema
 from sqlalchemy.pool import StaticPool
 
@@ -25,6 +25,12 @@ def isolated_database(monkeypatch):
         engine = create_engine(
             "sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool
         )
+    if not url:
+
+        @event.listens_for(engine, "connect")
+        def enable_foreign_keys(connection, _):
+            connection.execute("PRAGMA foreign_keys=ON")
+
     monkeypatch.setattr(database, "get_engine", lambda: engine)
     Base.metadata.create_all(engine)
     with session() as db, db.begin():

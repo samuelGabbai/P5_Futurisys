@@ -78,7 +78,7 @@
             "description": "Entrée non conforme : type, valeurs, colonnes, cible ou identifiant."
           },
           "413": {
-            "description": "Le contenu du fichier dépasse 10 Mio."
+            "description": "Le fichier dépasse la limite de taille ou de lignes."
           }
         }
       }
@@ -155,7 +155,7 @@
             "description": "Entrée non conforme : type, valeurs, colonnes, cible ou identifiant."
           },
           "413": {
-            "description": "Le contenu du fichier dépasse 10 Mio."
+            "description": "Le fichier dépasse la limite de taille ou de lignes."
           }
         }
       }
@@ -245,7 +245,7 @@
             "description": "Entrée non conforme : type, valeurs, colonnes, cible ou identifiant."
           },
           "413": {
-            "description": "Le contenu du fichier dépasse 10 Mio."
+            "description": "Le fichier dépasse la limite de taille ou de lignes."
           }
         }
       }

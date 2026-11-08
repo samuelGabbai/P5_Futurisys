@@ -123,7 +123,8 @@ def main():
         create_database()
     Base.metadata.create_all(get_engine())
     with get_engine().begin() as connection:
-        connection.exec_driver_sql((ROOT / "docs/migrations/002_explicit_api_logs.sql").read_text())
+        for migration in sorted((ROOT / "docs/migrations").glob("*.sql")):
+            connection.exec_driver_sql(migration.read_text())
     print(json.dumps(import_dataset(args.data_dir, args.model_path), indent=2))
 
 

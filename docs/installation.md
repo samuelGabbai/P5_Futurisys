@@ -63,14 +63,28 @@ existant, les droits des deux rôles et la recréation avec sauvegarde.
 
 L'API charge `.env` avec `python-dotenv`, sans remplacer les variables déjà définies
 dans l'environnement du processus. Les variables de publication doivent être configurées
-dans GitHub Actions ou dans l'environnement du terminal ; le script de publication
-ne charge pas automatiquement `.env`.
+dans GitHub Actions ou dans l’environnement du terminal ; le script de publication
+charge aussi `.env`, sans remplacer les variables déjà présentes.
 
 Pour un serveur PostgreSQL existant, partir de
 [`.env.example`](https://github.com/samuelGabbai/P5_Futurisys/blob/main/.env.example).
 Le rôle utilisé pour créer les tables et importer les données doit avoir les droits
 correspondants. Après l'import, l'API doit utiliser le rôle applicatif limité.
 Ne pas committer les secrets, les fichiers `.env` ou le répertoire `.local`.
+
+## Configurer les comptes HTTP locaux
+
+```bash
+uv run --no-sync python scripts/manage_users.py --bootstrap-local
+```
+
+Cette commande conserve les comptes existants. Sur une configuration vierge, elle
+crée `application` (`utilisateur`), `livraison` (`livreur`) et `admin` (`admin`) avec
+des mots de passe aléatoires. Les hashes sont dans `.env` ; les identifiants des
+outils locaux sont dans `.local/api-credentials.env`, en mode 600 et ignorés par Git.
+Consulter ce fichier localement pour se connecter à Swagger ; ne pas le partager.
+Les scripts de validation et de benchmark l’utilisent sans afficher les secrets.
+Pour un compte personnalisé, suivre le [guide d’authentification](authentication.md).
 
 ## Lancer l'API
 
@@ -82,7 +96,7 @@ Vérifier le service et la disponibilité du modèle :
 
 ```bash
 curl -i http://127.0.0.1:8000/health
-curl -i http://127.0.0.1:8000/features
+curl -i -u application http://127.0.0.1:8000/features
 ```
 
 La réponse de santé attendue est `{"status":"ok"}`. L'API refuse de commencer un
@@ -102,6 +116,7 @@ d'inférence avec le modèle réel ; il ajoute des échanges tracés à la BDD :
 
 ```bash
 uv run --no-sync python scripts/verify_database.py
+uv run --no-sync python scripts/smoke_container.py --base-url http://127.0.0.1:8000
 ```
 
 En cas d'erreur, consulter [le diagnostic](maintenance.md#diagnostic-des-problemes-courants).

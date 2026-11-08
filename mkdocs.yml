@@ -39,13 +39,16 @@ nav:
       - Référence et exemples: api.md
       - Validation Pydantic et tests: api_validation.md
       - Logs et diagnostic: api_logs.md
+      - Recette et preuves: validation.md
   - Modèle:
       - Données, entraînement et performances: model.md
       - Contrat des 43 variables: features.md
   - Architecture et PostgreSQL:
       - Architecture et choix techniques: architecture.md
       - Schéma et import de la base: database.md
+      - Besoins analytiques: analytics.md
   - Exploitation:
       - Déploiement et CI/CD: deployment.md
       - Publication Hugging Face: huggingface.md
       - Maintenance et mises à jour: maintenance.md
+      - Performances et volumes: performance.md

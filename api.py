@@ -45,6 +45,8 @@ from schemas import (
 
 DEFAULT_MODEL_PATH = Path(__file__).parent / "artifacts" / "turnover_model.joblib"
 MAX_CSV_BYTES = 10 * 1024 * 1024
+MAX_CSV_ROWS = 10_000
+MAX_CSV_COLUMNS = 128
 TARGET_COLUMN = "a_quitte_l_entreprise"
 
 app = FastAPI(
@@ -81,7 +83,7 @@ API_RESPONSES = {
         }
     },
     404: {"description": "Salarié ou ressource introuvable."},
-    413: {"description": "Le contenu du fichier dépasse 10 Mio."},
+    413: {"description": "Le fichier dépasse la limite de taille ou de lignes."},
     422: {"description": "Entrée non conforme : type, valeurs, colonnes, cible ou identifiant."},
     500: {"description": "Erreur du modèle ou sortie ne respectant pas le contrat."},
     503: {"description": "PostgreSQL, artefact, version enregistrée ou persistance indisponible."},
@@ -204,8 +206,15 @@ def _read_csv(file: UploadFile, separator: str) -> pd.DataFrame:
         raise HTTPException(status_code=413, detail="Le fichier dépasse la limite de 10 Mio.")
     try:
         text = content.decode("utf-8-sig")
-        rows = list(csv.reader(StringIO(text), delimiter=separator, strict=True))
-        rows = [row for row in rows if row]
+        rows = []
+        for row in csv.reader(StringIO(text), delimiter=separator, strict=True):
+            if not row:
+                continue
+            if len(rows) >= MAX_CSV_ROWS + 1:
+                raise HTTPException(413, f"Le fichier dépasse {MAX_CSV_ROWS} lignes de données.")
+            if len(row) > MAX_CSV_COLUMNS:
+                raise HTTPException(422, f"Le fichier dépasse {MAX_CSV_COLUMNS} colonnes.")
+            rows.append(row)
         if len(rows) < 2:
             raise ValueError("Aucune ligne de données.")
         header = rows[0]

@@ -119,3 +119,11 @@ les deux tests spécifiques à PostgreSQL sont explicitement ignorés.
 
 Références : [validateurs Pydantic et contexte](https://docs.pydantic.dev/latest/concepts/validators/)
 et [types contraints Pydantic](https://docs.pydantic.dev/latest/api/types/).
+
+## Périmètre de recette étendu
+
+La [recette actuelle](validation.md) couvre aussi l’authentification, les scripts
+opérationnels, le contexte Docker, les limites de 10 000 lignes et les contraintes
+relationnelles. La couverture CI est désormais calculée sur huit modules et les
+scripts, avec un seuil de 95 %. Un ancien résultat à 100 % sur six modules ne doit
+pas être présenté comme la couverture de l’ensemble du dépôt.

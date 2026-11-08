@@ -21,7 +21,18 @@ et la consultation du contrat. Les scores RH par identifiant nécessitent `utili
 
 ## Créer les comptes
 
-Depuis la racine du projet :
+Pour une initialisation locale sans saisie interactive :
+
+```bash
+uv run --no-sync python scripts/manage_users.py --bootstrap-local
+```
+
+Les comptes `application`, `livraison` et `admin` ont des secrets aléatoires conservés
+uniquement dans `.local/api-credentials.env` (mode 600). Le script ne les imprime pas
+et ne remplace pas une configuration de comptes existante. Les hashes sont dans `.env`.
+Ce fichier local est utilisé par les contrôles et le benchmark, pas par l’API.
+
+Pour choisir soi-même les mots de passe, depuis la racine du projet :
 
 ```bash
 uv run --no-sync python scripts/manage_users.py admin --role admin
@@ -106,3 +117,17 @@ La préparation locale `--prepare-only` ne publie rien et reste accessible sans 
 Les personnes ayant accès au dépôt source ou aux artefacts CI peuvent déjà obtenir
 le modèle par ces canaux : restreindre aussi les accès GitHub et la visibilité du
 dépôt Hugging Face si sa distribution doit être privée.
+
+## Vérifier effectivement les droits
+
+```bash
+uv run --no-sync python scripts/smoke_container.py --base-url http://127.0.0.1:8000
+uv run --no-sync python scripts/verify_database.py
+```
+
+Le premier outil vérifie en HTTP la connexion, la prédiction, le téléchargement,
+le refus du téléchargement à l’utilisateur, le refus de prédiction au livreur et
+le refus sans identifiants. Le second vérifie aussi les sources et les traces BDD.
+Les outils utilisent `HRNOVA_VERIFY_USERNAME` / `HRNOVA_VERIFY_PASSWORD` ou le fichier
+local généré, sans contourner l’authentification. Après changement manuel d’un mot
+de passe, actualiser les identifiants des outils ou leurs variables d’environnement.

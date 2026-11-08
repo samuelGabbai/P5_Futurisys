@@ -21,6 +21,9 @@ requête ni automatiquement à chaque push.
 | Composants et choix techniques | [Architecture](docs/architecture.md) |
 | Schéma relationnel, import et traçabilité | [PostgreSQL](docs/database.md) |
 | Logs lisibles dans DBeaver | [Logs API](docs/api_logs.md) |
+| Besoins BI, KPI et règles d’accès | [Analyse et tableaux de bord](docs/analytics.md) |
+| Mesures HTTP et limites de volume | [Performances](docs/performance.md) |
+| Recette PostgreSQL, rôles et CI | [Preuves de validation](docs/validation.md) |
 | Environnements, CI/CD et lancement du service | [Déploiement](docs/deployment.md) |
 | Publication automatique dans SamGabb/hrnova | [Hugging Face](docs/huggingface.md) |
 | Mises à jour, sauvegardes, retour arrière et diagnostic | [Maintenance](docs/maintenance.md) |
@@ -45,7 +48,7 @@ git clone https://github.com/samuelGabbai/P5_Futurisys.git
 cd P5_Futurisys
 uv sync --locked --python 3.13 --extra api --extra dev
 uv run --no-sync python scripts/local_postgres.py start
-uv run --no-sync python scripts/manage_users.py admin --role admin
+uv run --no-sync python scripts/manage_users.py --bootstrap-local
 uv run --no-sync uvicorn api:app --host 127.0.0.1 --port 8000 --reload
 ```
 
@@ -94,7 +97,7 @@ curl -X POST http://127.0.0.1:8000/score/file \
   -F 'file=@examples/employees_with_target.csv'
 ```
 
-Les fichiers doivent être UTF-8, numériques et limités à 10 Mio. La cible réelle
+Les fichiers doivent être UTF-8, numériques et limités à 10 Mio et 10 000 lignes. La cible réelle
 est nécessaire uniquement pour le score. Les exemples contiennent des profils
 et des cibles fictifs ; ils démontrent le contrat, pas les performances.
 
@@ -213,3 +216,5 @@ d'erreur et le `X-Request-ID`, sans mot de passe, token ou données RH.
 
 Auteur : **Samuel Gabbai** — cas d'étude Data Science TechNova Partners.
 
+
+Les conventions de branches, commits et revue figurent dans [CONTRIBUTING.md](CONTRIBUTING.md).

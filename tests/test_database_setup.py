@@ -201,8 +201,9 @@ def test_creation_cli_applies_migration_and_imports_requested_files(
     create_db.main()
     assert create_database.call_count == int(create)
     ddl.assert_called_once_with(engine)
-    migration = engine.begin.return_value.__enter__.return_value.exec_driver_sql.call_args.args[0]
-    assert "CREATE OR REPLACE VIEW api_logs" in migration
+    migrations = engine.begin.return_value.__enter__.return_value.exec_driver_sql.call_args_list
+    assert "CREATE OR REPLACE VIEW api_logs" in migrations[0].args[0]
+    assert "CREATE OR REPLACE VIEW analytics_daily_activity" in migrations[1].args[0]
     result = json.loads(capsys.readouterr().out)
     assert result["employees"] == 2  # employé importé + employé 42 de la fixture
     assert result["surveys"] == result["evaluations"] == 1

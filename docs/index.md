@@ -21,7 +21,7 @@ pour la traçabilité et une pipeline de validation et publication du modèle.
 
 - 1 470 salariés issus de trois sources, reliées par identifiant.
 - Un Random Forest calibré, utilisant 43 variables et un seuil de décision optimisé.
-- Sept endpoints métier ou techniques, avec validation Pydantic et documentation OpenAPI.
+- Neuf endpoints métier ou techniques, avec validation Pydantic et documentation OpenAPI.
 - Enregistrement des inputs et outputs du modèle en PostgreSQL, reliés par un `X-Request-ID`.
 - Tests automatiques, construction du package et export vers `SamGabb/hrnova` sur Hugging Face.
 

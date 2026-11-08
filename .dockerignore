@@ -4,6 +4,8 @@
 !uv.lock
 !README.md
 !api.py
+!auth.py
+!model_release.py
 !audit.py
 !database.py
 !inference.py

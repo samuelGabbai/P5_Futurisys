@@ -83,7 +83,7 @@ Les champs supplémentaires en dehors de `features` sont refusés.
 
 ## Prédiction et probabilités par CSV
 
-Le CSV doit être UTF-8, avec en-tête, au moins une ligne et au plus **10 Mio de contenu
+Le CSV doit être UTF-8, avec en-tête, au moins une ligne et au plus **10 Mio et 10 000 lignes de contenu
 du fichier**. Toutes les variables doivent être préparées et encodées. Ne pas envoyer
 les trois CSV RH bruts, la cible ou une colonne d'ID à ces deux routes.
 La limite est contrôlée à la lecture du fichier ; ce n'est pas une limite de taille
@@ -179,7 +179,7 @@ with httpx.Client(base_url="http://127.0.0.1:8000", timeout=60) as client:
 | --- | --- |
 | `404` | Salarié absent de la BDD ou route inconnue |
 | `405` | Mauvaise méthode HTTP |
-| `413` | Contenu du fichier supérieur à 10 Mio |
+| `413` | Contenu du fichier supérieur à 10 Mio et 10 000 lignes |
 | `422` | JSON/CSV invalide, colonnes manquantes ou supplémentaires, cible ou ID invalide |
 | `500` | Erreur de calcul, artefact invalide ou sortie ne respectant pas le contrat |
 | `503` | BDD indisponible, sortie non persistable, modèle absent ou version non importée |

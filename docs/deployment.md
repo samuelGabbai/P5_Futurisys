@@ -198,6 +198,8 @@ Dans **Settings → Environments**, créer les trois environnements et définir 
 | Type | Nom | Contenu |
 | --- | --- | --- |
 | Secret de chaque environnement | `DATABASE_URL` | URL `postgresql+psycopg://…` de sa base, avec le rôle applicatif |
+| Secret de chaque environnement | `HRNOVA_AUTH_USERS` | JSON des comptes, rôles et hashes |
+| Secrets de chaque environnement | `HRNOVA_SMOKE_USERNAME`, `HRNOVA_SMOKE_PASSWORD` | Compte utilisateur/analyste/admin pour la prédiction de contrôle |
 | Variable facultative | `API_PORT` | Port de l'API sur l'hôte, sinon valeur du tableau ci-dessus |
 | Variable facultative | `API_BIND_HOST` | `127.0.0.1` par défaut ; adapter seulement à l'exposition prévue |
 
@@ -287,3 +289,18 @@ les variables déjà importées dans PostgreSQL. Suivre le [protocole de mise à
 Références : [protections de branches GitHub](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches),
 [environnements GitHub](https://docs.github.com/en/actions/reference/workflows-and-actions/deployments-and-environments)
 et [configuration MkDocs](https://www.mkdocs.org/user-guide/configuration/).
+
+## Contrôle Docker avant fusion
+
+Le job principal construit l’image à chaque exécution de tests, y compris les pull
+requests, indépendamment de l’activation du déploiement. Il initialise une base de
+contrôle PostgreSQL, crée des comptes temporaires puis exécute
+`scripts/smoke_container.py --image hrnova-api:ci` sur le runner Linux.
+Le contrôle attend `/health`, appelle une prédiction authentifiée, télécharge avec
+le livreur et vérifie les refus 401/403. Le conteneur est arrêté en fin de contrôle,
+y compris en cas d’échec. Les secrets passent par l’environnement, sans valeurs
+dans les arguments Docker. Les fichiers temporaires de comptes ne sont pas uploadés.
+
+Le script utilise le réseau hôte Docker du runner Linux ; il ne prétend pas rendre
+ce test identique sur toutes les versions de Docker Desktop. Pour une API déjà
+lancée localement, utiliser `--base-url http://127.0.0.1:8000`.

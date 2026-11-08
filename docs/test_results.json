@@ -1,0 +1,15 @@
+{
+  "validation_date_paris": "2026-11-04",
+  "backend": "PostgreSQL 18, base temporaire créée et supprimée par scripts/run_postgres_tests.py",
+  "tests": 239,
+  "failures": 0,
+  "errors": 0,
+  "skipped": 0,
+  "coverage_percent": 97.88,
+  "coverage_scope": "8 modules applicatifs et scripts opérationnels ; générateurs de présentations exclus",
+  "coverage_minimum_percent": 95,
+  "http_roles_check": "API locale réelle : identité, prédiction, téléchargement et refus 401/403 validés",
+  "benchmark_measured_requests": 48,
+  "benchmark_errors": 0,
+  "docker": "Contexte vérifié par test ; build et smoke configurés en CI, Docker indisponible localement"
+}
