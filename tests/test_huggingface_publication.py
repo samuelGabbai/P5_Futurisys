@@ -134,3 +134,68 @@ def test_unauthenticated_delivery_never_contacts_huggingface(release, monkeypatc
     with pytest.raises(PermissionError, match="Authentification"):
         publish_release(output, "account/hrnova", "valid-token", "commit-123", client=client)
     client.upload_folder.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    "field,value,message",
+    [
+        (None, [], "métadonnées"),
+        (None, {}, "métadonnées"),
+        ("feature_names", [], "variables"),
+        ("feature_names", ["age", "age"], "variables"),
+        ("feature_names", [None], "variables"),
+        ("model", None, "predict"),
+        ("threshold", float("nan"), "Seuil ou classes"),
+        ("threshold", 1.1, "Seuil ou classes"),
+        ("positive_class", 2, "Seuil ou classes"),
+    ],
+)
+def test_invalid_source_cannot_create_release(release, tmp_path, field, value, message):
+    source, _, _ = release
+    bundle = joblib.load(source)
+    if field is None:
+        bundle = value
+    else:
+        bundle[field] = value
+    joblib.dump(bundle, source)
+    before = source.read_bytes()
+    destination = tmp_path / "rejected"
+    with pytest.raises(ValueError, match=message):
+        prepare_release(source, destination, "commit-123")
+    assert source.read_bytes() == before
+    assert not destination.exists()
+
+
+def test_missing_commit_and_nonempty_destination_preserve_files(release):
+    source, output, _ = release
+    before = {p.name: p.read_bytes() for p in output.iterdir()}
+    for commit, message in [("  ", "commit Git"), ("commit-123", "doit être vide")]:
+        with pytest.raises(ValueError, match=message):
+            prepare_release(source, output, commit)
+        assert {p.name: p.read_bytes() for p in output.iterdir()} == before
+
+
+def test_publication_constructs_sdk_client_without_network(release, monkeypatch):
+    import sys
+    from types import ModuleType
+
+    _, output, _ = release
+    sdk = ModuleType("huggingface_hub")
+    client = Mock()
+    client.upload_folder.return_value = "mock-commit-url"
+    sdk.HfApi = Mock(return_value=client)
+    monkeypatch.setitem(sys.modules, "huggingface_hub", sdk)
+    assert (
+        publish_release(output, "account/hrnova", "test-token", "commit-123") == "mock-commit-url"
+    )
+    sdk.HfApi.assert_called_once_with(token="test-token")
+    client.upload_folder.assert_called_once_with(
+        repo_id="account/hrnova",
+        repo_type="model",
+        revision="main",
+        folder_path=str(output),
+        allow_patterns=sorted(
+            ["turnover_model.joblib", "metadata.json", "README.md", "requirements.txt"]
+        ),
+        commit_message="Modèle HRNova — Git commit-123",
+    )

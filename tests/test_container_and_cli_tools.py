@@ -177,3 +177,53 @@ def test_access_control_cli_runs_on_local_api_or_container(monkeypatch):
     with pytest.raises(SystemExit) as error:
         smoke_container.main()
     assert error.value.code == 1
+
+
+@pytest.mark.parametrize("missing", ["DATABASE_URL", "HRNOVA_AUTH_USERS", "delivery"])
+def test_smoke_invalid_configuration_never_launches_docker(monkeypatch, missing):
+    calls = configure_smoke(monkeypatch)
+    if missing == "delivery":
+        monkeypatch.setattr(smoke_container, "dotenv_values", lambda _: {})
+    else:
+        monkeypatch.delenv(missing)
+    with pytest.raises(ValueError, match="requis"):
+        smoke_container.smoke("image:test")
+    assert calls == []
+
+
+def test_smoke_waits_for_readiness_before_checking_routes(monkeypatch):
+    calls = configure_smoke(monkeypatch)
+    client = smoke_container.httpx.Client.return_value
+    get = client.get.side_effect
+    health_calls = []
+
+    def delayed_health(path, **kwargs):
+        if path == "/health":
+            health_calls.append(path)
+            if len(health_calls) == 1:
+                raise httpx.ConnectError("starting")
+        return get(path, **kwargs)
+
+    client.get.side_effect = delayed_health
+    clock = iter([0, 1])
+    monkeypatch.setattr(smoke_container, "monotonic", lambda: next(clock))
+    wait = Mock()
+    monkeypatch.setattr(smoke_container, "sleep", wait)
+    smoke_container.smoke("image:test")
+    wait.assert_called_once_with(0.5)
+    assert len(health_calls) == 2
+    assert calls[-1][0] == "stop"
+    assert client.post.call_count == 2
+
+
+def test_local_smoke_cli_missing_delivery_never_connects(monkeypatch, capsys):
+    configure_smoke(monkeypatch)
+    monkeypatch.setattr(smoke_container, "dotenv_values", lambda _: {})
+    for name in ("HRNOVA_DELIVERY_USERNAME", "HRNOVA_DELIVERY_PASSWORD"):
+        monkeypatch.delenv(name, raising=False)
+    monkeypatch.setattr(sys, "argv", ["smoke_container.py", "--base-url", "http://test"])
+    with pytest.raises(SystemExit) as error:
+        smoke_container.main()
+    assert error.value.code == 1
+    smoke_container.httpx.Client.assert_not_called()
+    assert "Validation du conteneur échouée" in capsys.readouterr().err

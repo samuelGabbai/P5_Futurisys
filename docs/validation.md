@@ -58,8 +58,15 @@ opérationnels**. Les générateurs de présentations `scripts/build_*.py` sont 
 Le seuil CI est **95 % sur ce périmètre élargi**, au lieu de 100 % sur six modules
 seulement. Les fichiers JUnit, XML, JSON et HTML sont produits dans `reports/`,
 `coverage.xml` et `htmlcov/`, ignorés par Git et conservés comme artefacts CI.
-La recette finale du 4 novembre 2026 donne **239 tests PostgreSQL réussis, zéro
-échec et zéro test ignoré**, avec **97,88 % de couverture** sur ce périmètre.
+La recette du 2026-11-10 donne **263 tests PostgreSQL réussis, zéro
+échec et zéro test ignoré**, avec **100 % de couverture des lignes** :
+1 273 lignes exécutées sur 1 273, sans réduction du périmètre ni nouvelles exclusions.
+Les 24 cas supplémentaires vérifient les exports invalides, la construction du client
+Hugging Face, les commandes Docker et leur CLI, les configurations manquantes,
+l’attente de disponibilité, la confirmation de mot de passe et la lecture des droits SQL.
+Les frontières externes sont simulées avec des mocks ; aucun upload ni déploiement
+distant n’est exécuté par ces tests. La couverture des branches n’est pas activée.
+Le seuil CI demeure 95 % ; le résultat mesuré est 100 %.
 Le [résultat de recette](test_results.json) en conserve la synthèse.
 
 ## Limites de la validation

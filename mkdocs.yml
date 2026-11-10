@@ -1,22 +1,37 @@
-site_name: HRNova — Modèle et API
-site_description: Utilisation, architecture, performances et maintenance du modèle de turnover HRNova.
+site_name: HRNova
+site_description: Démarrer et comprendre l’API de prédiction HRNova.
+site_url: ''
 repo_url: https://github.com/samuelGabbai/P5_Futurisys
-repo_name: samuelGabbai/P5_Futurisys
+repo_name: Voir le dépôt GitHub
 edit_uri: blob/main/docs/
 dev_addr: 127.0.0.1:8001
 theme:
   name: material
   language: fr
   font: false
+  logo: assets/hrnova-mark.svg
+  favicon: assets/hrnova-mark.svg
+  palette:
+    - scheme: default
+      primary: teal
+      accent: cyan
   features:
-    - navigation.sections
+    - navigation.tabs
+    - navigation.top
+    - navigation.indexes
     - content.code.copy
+    - search.suggest
+  icon:
+    repo: fontawesome/brands/github
+extra_css:
+  - stylesheets/extra.css
 plugins:
   - search:
       lang: fr
 markdown_extensions:
   - tables
   - admonition
+  - attr_list
   - toc:
       permalink: true
   - pymdownx.superfences:
@@ -26,29 +41,16 @@ markdown_extensions:
           format: !!python/name:pymdownx.superfences.fence_code_format
 validation:
   nav:
-    omitted_files: warn
+    omitted_files: ignore
     not_found: warn
   links:
     not_found: warn
     anchors: warn
 nav:
-  - Authentification et rôles: authentication.md
   - Accueil: index.md
-  - Installation et configuration: installation.md
-  - API:
-      - Référence et exemples: api.md
-      - Validation Pydantic et tests: api_validation.md
-      - Logs et diagnostic: api_logs.md
-      - Recette et preuves: validation.md
-  - Modèle:
-      - Données, entraînement et performances: model.md
-      - Contrat des 43 variables: features.md
-  - Architecture et PostgreSQL:
-      - Architecture et choix techniques: architecture.md
-      - Schéma et import de la base: database.md
-      - Besoins analytiques: analytics.md
-  - Exploitation:
-      - Déploiement et CI/CD: deployment.md
-      - Publication Hugging Face: huggingface.md
-      - Maintenance et mises à jour: maintenance.md
-      - Performances et volumes: performance.md
+  - Démarrer de zéro: demarrage.md
+  - Utiliser l’API: api.md
+  - Comprendre le modèle: model.md
+  - Base et accès: database.md
+  - Déploiement: deployment.md
+  - Guides détaillés: ressources.md

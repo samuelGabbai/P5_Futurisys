@@ -13,6 +13,7 @@ requête ni automatiquement à chaque push.
 | Besoin | Guide |
 | --- | --- |
 | Vue d'ensemble et parcours utilisateur | [Accueil](docs/index.md) |
+| Cloner le dépôt et lancer le projet pas à pas | [Démarrer de zéro](docs/demarrage.md) |
 | Installer et configurer le projet | [Installation](docs/installation.md) |
 | Endpoints, Swagger, JSON/CSV et exemples Python | [Référence API](docs/api.md) |
 | Contraintes Pydantic et tests de chaque endpoint | [Validation](docs/api_validation.md) |
@@ -37,6 +38,8 @@ uv run --no-sync mkdocs serve
 ```
 
 Documentation : **http://127.0.0.1:8001**. Ce port est distinct de celui de l'API.
+Le site propose un parcours court, des guides détaillés et un lien direct vers le
+[dépôt GitHub](https://github.com/samuelGabbai/P5_Futurisys).
 
 ## Démarrage rapide
 

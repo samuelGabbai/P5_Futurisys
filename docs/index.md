@@ -1,46 +1,24 @@
-# HRNova : comprendre, utiliser et maintenir le projet
+<div class="hero">
+<h1>HRNova, du modèle à l’API</h1>
+<p>Un modèle de prédiction RH accessible par FastAPI, avec PostgreSQL pour tracer chaque échange et GitHub Actions pour vérifier les changements.</p>
+<p><a class="md-button md-button--primary" href="demarrage/">Démarrer le projet</a> <a class="md-button" href="https://github.com/samuelGabbai/P5_Futurisys">Voir le dépôt GitHub</a></p>
+</div>
 
-HRNova estime le risque de départ d'un salarié à partir de variables RH préparées.
-Le dépôt associe un notebook d'analyse et d'entraînement, une API FastAPI, PostgreSQL
-pour la traçabilité et une pipeline de validation et publication du modèle.
+## Choisir un guide
 
-## Choisir son parcours
+<div class="guide-grid">
+<a class="guide-card" href="demarrage/"><strong>01 · Démarrer</strong><span>Cloner le dépôt, installer, lancer PostgreSQL et l’API.</span></a>
+<a class="guide-card" href="api/"><strong>02 · Utiliser l’API</strong><span>Swagger, authentification et appels JSON ou CSV.</span></a>
+<a class="guide-card" href="model/"><strong>03 · Comprendre le modèle</strong><span>Données, métriques et limites de la prédiction.</span></a>
+<a class="guide-card" href="database/"><strong>04 · Explorer la base</strong><span>Schéma PostgreSQL, import et traçabilité.</span></a>
+<a class="guide-card" href="deployment/"><strong>05 · Déployer</strong><span>Environnements, CI/CD et cible de livraison.</span></a>
+<a class="guide-card" href="ressources/"><strong>06 · Aller plus loin</strong><span>Sécurité, tests, performances et maintenance.</span></a>
+</div>
 
-| Objectif | Point d'entrée |
-| --- | --- |
-| Installer et lancer le projet | [Installation](installation.md) |
-| Envoyer un fichier et récupérer une prédiction | [Référence API et exemples](api.md) |
-| Comprendre les variables attendues | [Contrat des variables](features.md) |
-| Consulter les performances et leurs limites | [Documentation du modèle](model.md) |
-| Comprendre les composants et leurs échanges | [Architecture](architecture.md) |
-| Consulter les entrées, sorties et erreurs | [PostgreSQL](database.md) et [logs API](api_logs.md) |
-| Mettre à jour ou revenir à une version précédente | [Maintenance](maintenance.md) |
-| Comprendre GitHub Actions et Hugging Face | [Déploiement](deployment.md) |
+## Repères rapides
 
-## Ce qui est disponible
+- **1 470 salariés** dans les trois sources RH ; **43 variables** préparées pour le modèle.
+- **9 endpoints** FastAPI, documentés dans Swagger à `http://127.0.0.1:8000/docs`.
+- **263 tests réussis et 100 % des lignes couvertes** lors de la recette PostgreSQL du 10 novembre 2026 ([périmètre et limites](validation.md)).
 
-- 1 470 salariés issus de trois sources, reliées par identifiant.
-- Un Random Forest calibré, utilisant 43 variables et un seuil de décision optimisé.
-- Neuf endpoints métier ou techniques, avec validation Pydantic et documentation OpenAPI.
-- Enregistrement des inputs et outputs du modèle en PostgreSQL, reliés par un `X-Request-ID`.
-- Tests automatiques, construction du package et export vers `SamGabb/hrnova` sur Hugging Face.
-
-L'usage documenté est local. La publication sur le Hub stocke le modèle ; elle ne
-constitue pas le déploiement d'une API ni l'hébergement de PostgreSQL.
-Les performances consignées dans [la fiche modèle](model.md) proviennent des sorties
-du notebook présentes dans le dépôt, et ne constituent pas une mesure continue en production.
-
-## Lire la documentation
-
-Les fichiers Markdown sont lisibles directement dans GitHub. Pour une navigation
-avec recherche et schémas rendus :
-
-```bash
-uv sync --locked --extra docs
-uv run --no-sync mkdocs serve
-```
-
-Ouvrir <http://127.0.0.1:8001>. Ce port est distinct du port `8000` de l'API.
-La documentation Swagger de l'API lancée est disponible à
-<http://127.0.0.1:8000/docs>, ReDoc à <http://127.0.0.1:8000/redoc> et le contrat
-machine à <http://127.0.0.1:8000/openapi.json>.
+L’application est démontrée **en local**. Le dépôt Model Hugging Face est une cible de publication distincte de l’API. Les [résultats prédictifs](model.md) proviennent du notebook enregistré et ne sont pas une mesure en production.
