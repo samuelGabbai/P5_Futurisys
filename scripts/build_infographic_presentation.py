@@ -10,7 +10,10 @@ from build_presentation import Deck, ROOT, rgb
 
 OUT=ROOT/'presentations'
 STEM='HRNova_Soutenance_Infographie_2026-11-10'
-source=Presentation(OUT/'HRNova_Soutenance_Plan_2026-11-10.pptx')
+# Le support livré conserve les notes orateur et sert de référence lors d'une
+# régénération. L'ancien PPT « Plan » n'est plus présent dans le dépôt.
+source=Presentation(OUT/f'{STEM}.pptx')
+assert len(source.slides) == 19
 results=json.loads((ROOT/'docs/test_results.json').read_text())
 assert results['tests']==263 and results['coverage_percent']==100.0
 assert results['covered_lines']==results['measured_lines']==1273

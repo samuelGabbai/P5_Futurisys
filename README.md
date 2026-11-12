@@ -29,8 +29,11 @@ requête ni automatiquement à chaque push.
 | Publication automatique dans SamGabb/hrnova | [Hugging Face](docs/huggingface.md) |
 | Mises à jour, sauvegardes, retour arrière et diagnostic | [Maintenance](docs/maintenance.md) |
 
-Les guides sont consultables directement dans GitHub. Pour ouvrir la documentation
-MkDocs avec recherche et diagrammes :
+Les guides sont consultables directement dans GitHub. Un
+[livrable autonome MkDocs avec la présentation](livrable_mkdocs/README.md)
+contient le site déjà construit et une commande de lancement simple.
+
+Pour lancer MkDocs depuis le projet avec recherche et diagrammes :
 
 ```bash
 uv sync --locked --extra api --extra dev --extra docs

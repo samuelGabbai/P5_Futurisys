@@ -1,0 +1,1522 @@
+
+<!doctype html>
+<html lang="fr" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Démarrer et comprendre l’API de prédiction HRNova.">
+      
+      
+      
+      
+        <link rel="prev" href="../database/">
+      
+      
+        <link rel="next" href="../presentation/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/hrnova-mark.svg">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.0">
+    
+    
+      
+        <title>Déploiement - HRNova</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.57a0d79d.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.fb2fffe2.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+    
+    
+      <link rel="stylesheet" href="../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="cyan">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#deploiement-local-et-integration-continue" class="md-skip">
+          Aller au contenu
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="En-tête">
+    <a href=".." title="HRNova" class="md-header__button md-logo" aria-label="HRNova" data-md-component="logo">
+      
+  <img src="../assets/hrnova-mark.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            HRNova
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Déploiement
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="cyan"  aria-hidden="true"  type="radio" name="__palette" id="__palette_0">
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Rechercher" placeholder="Rechercher" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Recherche">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Effacer" aria-label="Effacer" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initialisation de la recherche
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/samuelGabbai/P5_Futurisys" title="Aller au dépôt" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Voir le dépôt GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Onglets" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Accueil
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../demarrage/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Démarrer de zéro
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../api/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Utiliser l’API
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../model/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Comprendre le modèle
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../database/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Base et accès
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    <li class="md-tabs__item md-tabs__item--active">
+      <a href="./" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Déploiement
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../presentation/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Présentation
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../ressources/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Guides détaillés
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="HRNova" class="md-nav__button md-logo" aria-label="HRNova" data-md-component="logo">
+      
+  <img src="../assets/hrnova-mark.svg" alt="logo">
+
+    </a>
+    HRNova
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/samuelGabbai/P5_Futurisys" title="Aller au dépôt" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Voir le dépôt GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Accueil
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../demarrage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Démarrer de zéro
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Utiliser l’API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Comprendre le modèle
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../database/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Base et accès
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Déploiement
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Déploiement
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table des matières">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table des matières
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#etat-du-deploiement" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        État du déploiement
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#lancer-un-service-local" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Lancer un service local
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pipeline-github-actions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pipeline GitHub Actions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#protection-avant-fusion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Protection avant fusion
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#environnements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Environnements
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Environnements">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#role-de-chaque-environnement" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Rôle de chaque environnement
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#parcours-dune-version" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Parcours d'une version
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configuration-separee" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration séparée
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#correspondance-avec-github-actions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Correspondance avec GitHub Actions
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#activer-le-deploiement-api-dans-github-actions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Activer le déploiement API dans GitHub Actions
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Activer le déploiement API dans GitHub Actions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#preparer-les-machines-et-les-bases" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Préparer les machines et les bases
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configurer-github" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configurer GitHub
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#etapes-reellement-executees" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Étapes réellement exécutées
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#execution-manuelle-sur-une-machine-preparee" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exécution manuelle sur une machine préparée
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#publication-du-modele" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Publication du modèle
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#controle-docker-avant-fusion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Contrôle Docker avant fusion
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../presentation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Présentation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ressources/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guides détaillés
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table des matières">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table des matières
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#etat-du-deploiement" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        État du déploiement
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#lancer-un-service-local" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Lancer un service local
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pipeline-github-actions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pipeline GitHub Actions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#protection-avant-fusion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Protection avant fusion
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#environnements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Environnements
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Environnements">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#role-de-chaque-environnement" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Rôle de chaque environnement
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#parcours-dune-version" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Parcours d'une version
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configuration-separee" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration séparée
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#correspondance-avec-github-actions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Correspondance avec GitHub Actions
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#activer-le-deploiement-api-dans-github-actions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Activer le déploiement API dans GitHub Actions
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Activer le déploiement API dans GitHub Actions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#preparer-les-machines-et-les-bases" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Préparer les machines et les bases
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configurer-github" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configurer GitHub
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#etapes-reellement-executees" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Étapes réellement exécutées
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#execution-manuelle-sur-une-machine-preparee" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exécution manuelle sur une machine préparée
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#publication-du-modele" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Publication du modèle
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#controle-docker-avant-fusion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Contrôle Docker avant fusion
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="deploiement-local-et-integration-continue">Déploiement local et intégration continue<a class="headerlink" href="#deploiement-local-et-integration-continue" title="Permanent link">&para;</a></h1>
+<h2 id="etat-du-deploiement">État du déploiement<a class="headerlink" href="#etat-du-deploiement" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Composant</th>
+<th>Fonctionnement disponible</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>API FastAPI</td>
+<td>Processus local sur <code>127.0.0.1:8000</code></td>
+</tr>
+<tr>
+<td>PostgreSQL</td>
+<td>Instance dédiée sur <code>127.0.0.1:5433</code>, base <code>hrnova</code></td>
+</tr>
+<tr>
+<td>Documentation MkDocs</td>
+<td>Serveur de prévisualisation sur <code>127.0.0.1:8001</code> ou fichiers statiques construits</td>
+</tr>
+<tr>
+<td>GitHub Actions</td>
+<td>Tests, documentation, package, publication du modèle et déploiement API activable sur runners dédiés</td>
+</tr>
+<tr>
+<td>Hugging Face</td>
+<td>Dépôt Model <code>SamGabb/hrnova</code>, pas un Space API déployé par ce workflow</td>
+</tr>
+</tbody>
+</table>
+<h2 id="lancer-un-service-local">Lancer un service local<a class="headerlink" href="#lancer-un-service-local" title="Permanent link">&para;</a></h2>
+<p>Suivre <a href="../installation/">l'installation</a>, puis lancer l'API depuis la racine du dépôt :</p>
+<div class="highlight"><pre><span></span><code>uv<span class="w"> </span>sync<span class="w"> </span>--locked<span class="w"> </span>--extra<span class="w"> </span>api
+uv<span class="w"> </span>run<span class="w"> </span>--no-sync<span class="w"> </span>python<span class="w"> </span>scripts/local_postgres.py<span class="w"> </span>start
+uv<span class="w"> </span>run<span class="w"> </span>--no-sync<span class="w"> </span>uvicorn<span class="w"> </span>api:app<span class="w"> </span>--host<span class="w"> </span><span class="m">127</span>.0.0.1<span class="w"> </span>--port<span class="w"> </span><span class="m">8000</span>
+</code></pre></div>
+<p><code>--reload</code> est utile en développement, mais n'est pas utilisé pour un service stable.
+Le modèle est chargé à la première consultation qui le nécessite et mis en cache
+dans chaque processus. Remplacer le fichier nécessite donc un redémarrage de l'API.
+Le serveur PostgreSQL doit être redémarré après un redémarrage du Mac si aucun service
+système n'a été configuré ; <code>local_postgres.py start</code> s'en charge.</p>
+<p>Le projet fournit un Dockerfile et une configuration Compose pour exécuter l'API
+sur des machines préparées. Configurer les <a href="../authentication/">comptes et rôles HTTP Basic</a>
+et les secrets du contrôle de déploiement. Le reverse proxy et le TLS restent
+à configurer pour une exposition publique. La BDD doit être accessible
+depuis le conteneur. <code>127.0.0.1</code> depuis un conteneur désigne ce conteneur, pas le
+PostgreSQL du Mac ; les modèles de configuration utilisent <code>host.docker.internal</code>.</p>
+<h2 id="pipeline-github-actions">Pipeline GitHub Actions<a class="headerlink" href="#pipeline-github-actions" title="Permanent link">&para;</a></h2>
+<p>Le fichier <code>.github/workflows/ci.yml</code> réagit aux push, pull requests, groupes de fusion
+et lancements manuels. Python 3.13 et <code>uv.lock</code> fixent l'environnement.</p>
+<pre class="mermaid"><code>flowchart TD
+    Trigger["Push / PR / merge_group / lancement manuel"] --&gt; Checks["Tests PostgreSQL + construction de la documentation et du package"]
+    Checks --&gt; Gate["Validation avant fusion"]
+    Checks --&gt; Release["Export modèle sans dictionnaire de salariés"]
+    Checks --&gt; Env["Validation de l'environnement : push ou manuel"]
+    Release --&gt; Publish["Publication Hugging Face : main uniquement"]
+    Env --&gt; Publish
+    Checks --&gt; Image["Image API : activation requise, branches dédiées"]
+    Env --&gt; Image
+    Image --&gt; Deploy["Runner cible : précontrôle BDD, démarrage et inférence"]</code></pre>
+<p>Le job de tests utilise PostgreSQL 18 avec un schéma isolé par test. Les rapports
+JUnit et de couverture, le package, la documentation HTML et l'export du modèle
+sont conservés dans les artefacts GitHub pendant 14 jours.
+Les tests ne réentraînent pas le modèle ; ils contrôlent les routes et la traçabilité.
+Le test d'import utilise aussi le dataset complet et l'artefact local.</p>
+<p>La documentation est construite avec <code>mkdocs build --strict</code> : un lien interne
+invalide ou un document de navigation manquant fait échouer cette vérification.
+La construction produit un artefact HTML, sans publier automatiquement un site public.</p>
+<h2 id="protection-avant-fusion">Protection avant fusion<a class="headerlink" href="#protection-avant-fusion" title="Permanent link">&para;</a></h2>
+<p>Après une première exécution, configurer un ruleset ou une protection de branche
+dans les réglages GitHub pour <code>main</code> et <code>develop</code> :</p>
+<ol>
+<li>Exiger une pull request avant fusion.</li>
+<li>Exiger le contrôle <strong>Validation avant fusion</strong>.</li>
+<li>Exiger une branche à jour avant la fusion.</li>
+<li>Appliquer la règle aux administrateurs et limiter les possibilités de contournement.</li>
+</ol>
+<p>Ces paramètres sont gérés dans GitHub ; le YAML seul ne peut pas empêcher une fusion.
+Un commit resté uniquement local ne déclenche pas GitHub Actions.</p>
+<h2 id="environnements">Environnements<a class="headerlink" href="#environnements" title="Permanent link">&para;</a></h2>
+<p>Un <strong>environnement de déploiement</strong> est un ensemble cohérent : une instance de
+l'API, sa configuration, une base PostgreSQL et une version du modèle. Le code
+peut être identique entre environnements ; les adresses, accès et données sont
+propres à chacun. Un environnement GitHub organise les variables, secrets et
+protections des jobs qui le ciblent. Il ne crée pas à lui seul de serveur API.</p>
+<h3 id="role-de-chaque-environnement">Rôle de chaque environnement<a class="headerlink" href="#role-de-chaque-environnement" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Environnement</th>
+<th>Objectif</th>
+<th>Données et configuration attendues lors d'un déploiement</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>development</code></td>
+<td>Développer et déboguer rapidement</td>
+<td>API locale, données de test, base de développement</td>
+</tr>
+<tr>
+<td><code>staging</code> (préproduction)</td>
+<td>Répéter la mise en service et les tests d'intégration</td>
+<td>Instance et base distinctes, données synthétiques ou anonymisées, configuration proche de la production</td>
+</tr>
+<tr>
+<td><code>production</code></td>
+<td>Servir la version validée aux utilisateurs</td>
+<td>Instance stable, base dédiée, accès limités et secrets propres à la production</td>
+</tr>
+</tbody>
+</table>
+<p>Les noms de bases <code>hrnova_dev</code>, <code>hrnova_staging</code> et <code>hrnova_prod</code> peuvent servir
+de convention pour de futures instances. <strong>Ces trois bases ne sont pas créées par
+la pipeline actuelle</strong> ; l'installation locale existante utilise <code>hrnova</code>.</p>
+<h3 id="parcours-dune-version">Parcours d'une version<a class="headerlink" href="#parcours-dune-version" title="Permanent link">&para;</a></h3>
+<pre class="mermaid"><code>flowchart LR
+    Dev["Development : développer et tester"] --&gt; PR["Pull request + contrôles CI"]
+    PR --&gt; Staging["Staging : vérifier le candidat"]
+    Staging --&gt; Approval["Validation de mise en production"]
+    Approval --&gt; Prod["Production : servir la version validée"]
+    Prod --&gt; Health["Vérifier /health et une prédiction tracée"]</code></pre>
+<p>Ce schéma décrit le protocole de promotion cible. Pour un déploiement reproductible, promouvoir
+les mêmes artefacts de code et de modèle, identifiés par leur commit Git et leur
+SHA-256, après validation en préproduction. Une fusion pouvant modifier le code,
+vérifier que le candidat testé correspond bien à la version publiée. Une évolution
+du modèle doit aussi être enregistrée dans la base de chaque environnement avant
+de l'utiliser. Le <a href="../maintenance/">guide de maintenance</a> détaille la mise à jour.</p>
+<h3 id="configuration-separee">Configuration séparée<a class="headerlink" href="#configuration-separee" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Paramètre</th>
+<th>Séparation attendue</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>DATABASE_URL</code></td>
+<td>Base et rôle applicatif propres à l'environnement ; ne jamais utiliser la base de production pour les tests</td>
+</tr>
+<tr>
+<td><code>HRNOVA_MODEL_PATH</code></td>
+<td>Fichier du modèle validé pour cette version, présent sur la machine de l'API</td>
+</tr>
+<tr>
+<td><code>HF_TOKEN</code></td>
+<td>Secret du job de publication ; inutile au processus API local</td>
+</tr>
+<tr>
+<td><code>HF_REPO_ID</code></td>
+<td>Destination de publication du modèle ; le dépôt Model n'est pas un serveur FastAPI</td>
+</tr>
+<tr>
+<td>URL de l'API</td>
+<td>Adresse propre à l'instance ; elle dépend de l'hébergement effectivement configuré</td>
+</tr>
+</tbody>
+</table>
+<p>Exemple de démarrage d'une <strong>instance de préproduction déjà provisionnée</strong> :</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># .env.staging contient DATABASE_URL et HRNOVA_MODEL_PATH, sans être versionné.</span>
+uv<span class="w"> </span>run<span class="w"> </span>--no-sync<span class="w"> </span>uvicorn<span class="w"> </span>api:app<span class="w"> </span>--env-file<span class="w"> </span>.env.staging<span class="w"> </span>--host<span class="w"> </span><span class="m">127</span>.0.0.1<span class="w"> </span>--port<span class="w"> </span><span class="m">8002</span>
+</code></pre></div>
+<p>Le fichier doit désigner une base existante, initialisée avec les tables, les
+droits applicatifs et la version du modèle. Cette commande lance un processus
+local ; elle ne provisionne pas la base et ne configure pas de service permanent.
+Les variables déjà exportées dans le terminal prennent priorité sur le fichier :
+utiliser un terminal ou un service dont la configuration correspond à la cible.
+Le port <code>8002</code> est un exemple, pas une instance déjà disponible.</p>
+<p>Avant une mise en production, sauvegarder la base et identifier la version
+précédente du code et du modèle. Après redémarrage, vérifier <code>/health</code>, puis une
+inférence et sa trace en BDD. En cas d'échec, revenir à la version précédente ;
+une migration de schéma exige son propre plan de compatibilité ou de restauration.</p>
+<h3 id="correspondance-avec-github-actions">Correspondance avec GitHub Actions<a class="headerlink" href="#correspondance-avec-github-actions" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Branche lors d'un push ou d'un lancement manuel</th>
+<th>Environnement GitHub</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Branches de travail</td>
+<td><code>development</code></td>
+</tr>
+<tr>
+<td><code>develop</code></td>
+<td><code>staging</code></td>
+</tr>
+<tr>
+<td><code>main</code></td>
+<td><code>production</code></td>
+</tr>
+</tbody>
+</table>
+<p>Créer ces environnements dans <strong>Settings → Environments</strong>, limiter <code>staging</code> à
+<code>develop</code> et <code>production</code> à <code>main</code>. Une approbation de production peut être activée
+si le dépôt permet cette option. Les pull requests n'accèdent pas à ces environnements.
+Le job de publication utilise lui aussi <code>production</code> et peut donc demander une
+approbation distincte.</p>
+<p>Le job d'environnement utilise une BDD de test éphémère et vérifie la configuration
+<code>HRNOVA_MODEL_PATH</code> puis les tests. Le déploiement effectif est assuré par les jobs
+<code>build-api-image</code> et <code>deploy-api</code> lorsqu'ils sont activés, selon la procédure ci-dessous.</p>
+<h2 id="activer-le-deploiement-api-dans-github-actions">Activer le déploiement API dans GitHub Actions<a class="headerlink" href="#activer-le-deploiement-api-dans-github-actions" title="Permanent link">&para;</a></h2>
+<h3 id="preparer-les-machines-et-les-bases">Préparer les machines et les bases<a class="headerlink" href="#preparer-les-machines-et-les-bases" title="Permanent link">&para;</a></h3>
+<p>Prévoir des machines Linux x64 avec Docker Engine, Docker Compose V2 (avec
+<code>up --wait</code>), Python 3 et un runner GitHub installé comme service. Le compte du
+runner doit pouvoir utiliser Docker. Affecter un label propre à chaque cible :</p>
+<table>
+<thead>
+<tr>
+<th>Branche autorisée au déploiement</th>
+<th>Environnement</th>
+<th>Label du runner</th>
+<th>Port par défaut sur l'hôte</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>development</code></td>
+<td><code>development</code></td>
+<td><code>hrnova-development</code></td>
+<td><code>8000</code></td>
+</tr>
+<tr>
+<td><code>develop</code></td>
+<td><code>staging</code></td>
+<td><code>hrnova-staging</code></td>
+<td><code>8002</code></td>
+</tr>
+<tr>
+<td><code>main</code></td>
+<td><code>production</code></td>
+<td><code>hrnova-production</code></td>
+<td><code>8003</code></td>
+</tr>
+</tbody>
+</table>
+<p>Les branches libres et les pull requests passent les tests, mais ne déploient
+pas l'API. Les runners de déploiement doivent être réservés aux workflows de
+confiance ; ne pas y exécuter du code de pull request non approuvé.</p>
+<p>Créer et initialiser une base PostgreSQL par cible avec <code>create_db.py</code>, les trois
+sources CSV et l'artefact complet, comme décrit dans le <a href="../database/">guide BDD</a>.
+Créer les tables et appliquer les migrations avec le rôle d'administration,
+puis utiliser le rôle applicatif limité pour l'API. Cette étape est explicite :
+le job de déploiement ne crée pas de base, n'applique pas de migration et ne
+réimporte pas automatiquement le dataset de production. Toute nouvelle version
+du modèle doit être enregistrée dans la base avant sa mise en service.</p>
+<p>La connexion doit fonctionner <strong>depuis un conteneur</strong>. Sur Docker Desktop,
+<code>host.docker.internal</code> désigne la machine hôte. Sur Linux, Compose ajoute ce nom
+via <code>host-gateway</code> ; PostgreSQL doit écouter sur une interface joignable depuis
+le réseau Docker et autoriser ce réseau dans <code>pg_hba.conf</code>. Un serveur écoutant
+uniquement sur <code>127.0.0.1</code> n'est pas joignable via la passerelle Linux.</p>
+<h3 id="configurer-github">Configurer GitHub<a class="headerlink" href="#configurer-github" title="Permanent link">&para;</a></h3>
+<p>Dans <strong>Settings → Environments</strong>, créer les trois environnements et définir :</p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Nom</th>
+<th>Contenu</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Secret de chaque environnement</td>
+<td><code>DATABASE_URL</code></td>
+<td>URL <code>postgresql+psycopg://…</code> de sa base, avec le rôle applicatif</td>
+</tr>
+<tr>
+<td>Secret de chaque environnement</td>
+<td><code>HRNOVA_AUTH_USERS</code></td>
+<td>JSON des comptes, rôles et hashes</td>
+</tr>
+<tr>
+<td>Secrets de chaque environnement</td>
+<td><code>HRNOVA_SMOKE_USERNAME</code>, <code>HRNOVA_SMOKE_PASSWORD</code></td>
+<td>Compte utilisateur/analyste/admin pour la prédiction de contrôle</td>
+</tr>
+<tr>
+<td>Variable facultative</td>
+<td><code>API_PORT</code></td>
+<td>Port de l'API sur l'hôte, sinon valeur du tableau ci-dessus</td>
+</tr>
+<tr>
+<td>Variable facultative</td>
+<td><code>API_BIND_HOST</code></td>
+<td><code>127.0.0.1</code> par défaut ; adapter seulement à l'exposition prévue</td>
+</tr>
+</tbody>
+</table>
+<p>Restreindre les branches : <code>development</code> pour l'environnement de développement,
+<code>develop</code> pour staging et <code>main</code> pour production. Configurer une approbation de
+production si cette fonctionnalité est disponible pour le dépôt. Les jobs de
+publication Hugging Face et de déploiement API sont indépendants et peuvent
+chacun déclencher cette protection.</p>
+<p>Après préparation des cibles, définir la <strong>variable de dépôt</strong>
+<code>ENABLE_API_DEPLOYMENT</code> à <code>true</code> dans <strong>Settings → Secrets and variables → Actions →
+Variables</strong>. Elle est désactivée par défaut pour que les jobs n'attendent pas
+des runners absents. Un push sur une branche du tableau, ou un lancement manuel
+du workflow sur cette branche, exécutera les tests puis le déploiement.</p>
+<p>L'URL effective reste celle de la machine cible et de son exposition réseau.
+Le workflow ne crée ni domaine public ni URL Hugging Face pour FastAPI.</p>
+<h3 id="etapes-reellement-executees">Étapes réellement exécutées<a class="headerlink" href="#etapes-reellement-executees" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Les tests, la construction du package et la validation d'environnement réussissent.</li>
+<li>GitHub construit une image Linux x64 depuis ce même commit et <code>uv.lock</code>, puis
+   la transmet sous forme d'artefact <code>api-image-&lt;SHA&gt;</code> au runner cible.</li>
+<li>Le runner charge cette image, identifiée par <code>hrnova-api:&lt;SHA&gt;</code>.</li>
+<li>Un conteneur temporaire vérifie en lecture seule la connexion, les tables de
+   traçabilité et les métadonnées du modèle enregistré. Un échec laisse l'API
+   courante intacte.</li>
+<li>Compose remplace le service <code>hrnova-&lt;environnement&gt;-api</code> et attend <code>/health</code>.</li>
+<li>Une prédiction synthétique <code>/predict</code> est exécutée et son <code>X-Request-ID</code> contrôlé.
+   Ce test crée volontairement un échange traçable dans la base cible.</li>
+<li>En cas d'échec après remplacement, le script tente de restaurer l'ID immuable
+   de l'image précédente. Au premier déploiement, il arrête l'instance défaillante.</li>
+</ol>
+<p>Le remplacement peut causer une brève interruption ; ce mécanisme ne garantit
+pas un déploiement sans interruption. Le retour arrière restaure l'image du code
+et du modèle avec la configuration du lancement courant : il ne restaure pas
+une ancienne valeur de secret ou le schéma de la base. Si le rollback échoue,
+le job le signale explicitement et demande une intervention. Les push suivants
+n'annulent pas un déploiement en cours ; ils attendent leur tour.</p>
+<p>L'image contient l'artefact complet de confiance, qui inclut des variables par
+salarié. Elle est transmise comme artefact GitHub pendant trois jours, sans envoi
+à un registre public. Réserver l'accès au dépôt, aux artefacts et aux runners aux
+personnes autorisées. L'export public Hugging Face reste séparé et épuré.</p>
+<h3 id="execution-manuelle-sur-une-machine-preparee">Exécution manuelle sur une machine préparée<a class="headerlink" href="#execution-manuelle-sur-une-machine-preparee" title="Permanent link">&para;</a></h3>
+<p>Exemple pour staging ; adapter le fichier selon l'environnement :</p>
+<div class="highlight"><pre><span></span><code>cp<span class="w"> </span>deployment/staging.env.example<span class="w"> </span>.env.staging
+<span class="c1"># Renseigner DATABASE_URL dans .env.staging, avec une base initialisée.</span>
+docker<span class="w"> </span>build<span class="w"> </span>--tag<span class="w"> </span>hrnova-api:local<span class="w"> </span>.
+uv<span class="w"> </span>run<span class="w"> </span>--no-sync<span class="w"> </span>--env-file<span class="w"> </span>.env.staging<span class="w"> </span>python<span class="w"> </span>scripts/deploy_api.py<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--environment<span class="w"> </span>staging<span class="w"> </span>--image<span class="w"> </span>hrnova-api:local
+</code></pre></div>
+<p>Les modèles <code>deployment/development.env.example</code>, <code>staging.env.example</code> et
+<code>production.env.example</code> ne contiennent aucun secret réel. La valeur
+<code>CHANGE_ME</code> est refusée par le script. Les fichiers <code>.env.*</code> restent ignorés par
+Git. Le script ne journalise pas la chaîne de connexion ; consulter les logs
+sur la machine cible pour les diagnostics détaillés.</p>
+<div class="highlight"><pre><span></span><code>docker<span class="w"> </span>compose<span class="w"> </span>--env-file<span class="w"> </span>.env.staging<span class="w"> </span>--project-name<span class="w"> </span>hrnova-staging<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--file<span class="w"> </span>deployment/compose.yml<span class="w"> </span>ps
+docker<span class="w"> </span>compose<span class="w"> </span>--env-file<span class="w"> </span>.env.staging<span class="w"> </span>--project-name<span class="w"> </span>hrnova-staging<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--file<span class="w"> </span>deployment/compose.yml<span class="w"> </span>logs<span class="w"> </span>--tail<span class="w"> </span><span class="m">50</span><span class="w"> </span>api
+curl<span class="w"> </span>http://127.0.0.1:8002/health
+</code></pre></div>
+<p>Après un déploiement CI, renseigner <code>HRNOVA_IMAGE=hrnova-api:&lt;SHA&gt;</code> dans le fichier
+local avant d'utiliser ces commandes Compose. Ne pas utiliser <code>docker compose
+config</code> dans des logs partagés : sa sortie résolue inclut les secrets.</p>
+<h2 id="publication-du-modele">Publication du modèle<a class="headerlink" href="#publication-du-modele" title="Permanent link">&para;</a></h2>
+<p>Le <a href="../huggingface/">guide Hugging Face</a> décrit le secret <code>HF_TOKEN</code>, la variable
+facultative <code>HF_REPO_ID</code> et les quatre fichiers envoyés. La publication attend
+la réussite des tests et de la validation d'environnement ; elle concerne <code>main</code>.
+Le token n'est nécessaire qu'à la publication, pas aux tests ni à la construction
+de la documentation. Les artefacts sont reliés au commit Git source.</p>
+<p>Mettre à jour le dépôt Model ne recharge pas automatiquement l'API locale ni
+les variables déjà importées dans PostgreSQL. Suivre le <a href="../maintenance/">protocole de mise à jour</a>.</p>
+<p>Références : <a href="https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches">protections de branches GitHub</a>,
+<a href="https://docs.github.com/en/actions/reference/workflows-and-actions/deployments-and-environments">environnements GitHub</a>
+et <a href="https://www.mkdocs.org/user-guide/configuration/">configuration MkDocs</a>.</p>
+<h2 id="controle-docker-avant-fusion">Contrôle Docker avant fusion<a class="headerlink" href="#controle-docker-avant-fusion" title="Permanent link">&para;</a></h2>
+<p>Le job principal construit l’image à chaque exécution de tests, y compris les pull
+requests, indépendamment de l’activation du déploiement. Il initialise une base de
+contrôle PostgreSQL, crée des comptes temporaires puis exécute
+<code>scripts/smoke_container.py --image hrnova-api:ci</code> sur le runner Linux.
+Le contrôle attend <code>/health</code>, appelle une prédiction authentifiée, télécharge avec
+le livreur et vérifie les refus 401/403. Le conteneur est arrêté en fin de contrôle,
+y compris en cas d’échec. Les secrets passent par l’environnement, sans valeurs
+dans les arguments Docker. Les fichiers temporaires de comptes ne sont pas uploadés.</p>
+<p>Le script utilise le réseau hôte Docker du runner Linux ; il ne prétend pas rendre
+ce test identique sur toutes les versions de Docker Desktop. Pour une API déjà
+lancée localement, utiliser <code>--base-url http://127.0.0.1:8000</code>.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Retour en haut de la page
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.top", "navigation.indexes", "content.code.copy", "search.suggest"], "search": "../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copi\u00e9 dans le presse-papier", "clipboard.copy": "Copier dans le presse-papier", "search.result.more.one": "1 de plus sur cette page", "search.result.more.other": "# de plus sur cette page", "search.result.none": "Aucun document trouv\u00e9", "search.result.one": "1 document trouv\u00e9", "search.result.other": "# documents trouv\u00e9s", "search.result.placeholder": "Taper pour d\u00e9marrer la recherche", "search.result.term.missing": "Non trouv\u00e9", "select.version": "S\u00e9lectionner la version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.c21346df.min.js"></script>
+      
+    
+  </body>
+</html>
